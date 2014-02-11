@@ -15,6 +15,50 @@ requirejs(['Utilities.js', 'chai'], function(Utilities, chai) {
     it('Utilities object\'s accepts property is a function', function() {
       expect(Utilities.accepts).to.be.a('function');
     });
+
+
+    it('Utilities object has \'hasCompleteParse\' property', function() {
+      expect(Utilities).to.have.property('hasCompleteParse');
+    });
+
+
+    it('Utilities object\'s hasCompleteParse property is a function', function() {
+      expect(Utilities.hasCompleteParse).to.be.a('function');
+    });
+  });
+
+
+  describe('hasCompleteParse', function() {
+    var hasCompleteParse = Utilities.hasCompleteParse;
+
+
+    // The next few tests have a common shape: factor out the boilerplate
+    var makeHasCompleteParseTest = function(input, expectedParse) {
+      return function() {
+        expect(hasCompleteParse(input)).to.equal(expectedParse);
+      };
+    };
+
+
+    it('HasCompleteParse returns false for the empty list', makeHasCompleteParseTest([], false));
+
+
+    var makeElement = function(r) {return {remaining: r, value: null};};
+    var tests = [
+      {name: 'array', fail: [makeElement(['a']), makeElement(['b'])], pass: [makeElement(['a']), makeElement(['b']), makeElement([])]},
+      {name: 'string', fail: [makeElement('a'), makeElement('b')], pass: [makeElement('a'), makeElement('b'), makeElement('')]}
+    ];
+
+
+    tests.forEach(function(test) {
+      var name = test.name;
+
+      it('HasCompleteParse fails if no element with \'remaining\' of length 0 (' + name + ')',
+         makeHasCompleteParseTest(test.fail, false));
+
+      it('HasCompleteParse succeeds if element with \'remaining\' of length 0 (' + name + ')',
+         makeHasCompleteParseTest(test.pass, true));
+    });
   });
 
 

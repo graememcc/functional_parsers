@@ -3,8 +3,11 @@ define([], function() {
 
 
   var accepts = function(parser, input) {
-    var results = parser(input);
+    return hasCompleteParse(parser(input));
+  };
 
+
+  var hasCompleteParse = function(results) {
     return results.some(function(result) {
       return result.remaining.length === 0;
     });
@@ -12,6 +15,7 @@ define([], function() {
 
 
   return {
-    accepts: accepts
+    accepts: accepts,
+    hasCompleteParse: hasCompleteParse
   };
 });

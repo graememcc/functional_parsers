@@ -1,4 +1,4 @@
-define([], function() {
+define(['Utilities.js'], function(Utilities) {
   "use strict";
 
 
@@ -14,6 +14,17 @@ define([], function() {
   ParseResult.prototype.toString = function() {
     return ['{ Remaining: ', this.remaining.toString(),
             ' | Value: ', this.value.toString(), '}'].join('');
+  };
+
+
+  var equalsArray = Utilities.equalsArray;
+  ParseResult.prototype.equals = function(other) {
+    var remainingEqual = Array.isArray(this.remaining) ? equalsArray(this.remaining, other.remaining) : this.remaining === other.remaining;
+    if (!remainingEqual)
+      return false;
+
+    var valueEqual = Array.isArray(this.value) ? equalsArray(this.value, other.value) : this.value === other.value;
+    return valueEqual;
   };
 
 

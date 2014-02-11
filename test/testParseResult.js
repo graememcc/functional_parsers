@@ -49,6 +49,18 @@ requirejs(['ParseResult.js', 'chai'], function(ParseResult, chai) {
       var q = new ParseResult(null, value2);
       expect(q.value).to.equal(value2);
     });
+
+
+    it('Created object has \'equals\' property', function () {
+      var p = new ParseResult(null, null);
+      expect(p).to.have.property('equals');
+    });
+
+
+    it('Created object\'s equals property is a function', function () {
+      var p = new ParseResult(null, null);
+      expect(p.equals).to.be.a('function');
+    });
   });
 
 
@@ -84,6 +96,86 @@ requirejs(['ParseResult.js', 'chai'], function(ParseResult, chai) {
       var value = [1, 2];
       var p = new ParseResult(remaining, value);
       expect(p.toString()).to.equal('{ Remaining: mozilla | Value: ' + value.toString() + '}');
+    });
+  });
+
+
+  describe('equals', function() {
+    var failTests = [
+      {name: 'different types', values: [['a'], 'a']},
+      {name: 'different strings', values: ['a', 'b']},
+      {name: 'different arrays', values: [['a', 'b'], ['c', 'd']]},
+      {name: 'different values', values: [4, 5]}];
+
+
+    var makeFailRemainingTest = function(values) {
+      return function() {
+        var p1 = new ParseResult(values[0], values[0]);
+        var p2 = new ParseResult(values[1], values[0]);
+        expect(p1.equals(p2)).to.equal(false);
+        expect(p2.equals(p1)).to.equal(false);
+      };
+    };
+
+
+    var makeFailValuesTest = function(values) {
+      return function() {
+        var p1 = new ParseResult(values[0], values[0]);
+        var p2 = new ParseResult(values[0], values[1]);
+        expect(p1.equals(p2)).to.equal(false);
+        expect(p2.equals(p1)).to.equal(false);
+      };
+    };
+
+
+    var makeFailBothTest = function(values) {
+      return function() {
+        var p1 = new ParseResult(values[0], values[0]);
+        var p2 = new ParseResult(values[1], values[1]);
+        expect(p1.equals(p2)).to.equal(false);
+        expect(p2.equals(p1)).to.equal(false);
+      };
+    };
+
+
+    failTests.forEach(function(test, i) {
+      it('ParseResults are not equal when \'remaining\' property has ' + test.name,
+         makeFailRemainingTest(test.values));
+
+      it('ParseResults are not equal when \'value\' property has ' + test.name,
+         makeFailValuesTest(test.values));
+
+      it('ParseResults are not equal when both properties have ' + test.name,
+         makeFailBothTest(test.values));
+    });
+
+
+    var passTests = [
+      {name: 'same strings', value: 'a'},
+      {name: 'same arrays', value: ['a', 'b']},
+      {name: 'same values', value: 4}];
+
+
+    var makePassTest = function(r, v) {
+      return function() {
+        var p1 = new ParseResult(r, v);
+        var p2 = new ParseResult(r, v);
+        expect(p1.equals(p2)).to.equal(true);
+        expect(p2.equals(p1)).to.equal(true);
+      };
+    };
+
+
+    passTests.forEach(function(remainingTest, i) {
+      // The 'values' test isn't applicable to the input
+      if (i === passTests.length - 1)
+        return;
+
+      passTests.forEach(function(valuesTest, j) {
+        it('ParseResults are equal when \'remaining\' properties have ' + remainingTest.name +
+           ' and \'values\' properties have ' + valuesTest.name,
+           makePassTest(remainingTest.value, valuesTest.value));
+      });
     });
   });
 });

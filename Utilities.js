@@ -7,6 +7,13 @@ define([], function() {
   };
 
 
+  var containsResult = function(needle, results) {
+    return results.some(function(result) {
+      return result.equals(needle);
+    });
+  };
+
+
   var equalsArray = function(l, r) {
     if (!Array.isArray(l) || !Array.isArray(r))
       return false;
@@ -54,6 +61,7 @@ define([], function() {
 
   return {
     accepts: accepts,
+    containsResult: containsResult,
     equalsArray: equalsArray,
     getFinalValue: getFinalValue,
     hasCompleteParse: hasCompleteParse

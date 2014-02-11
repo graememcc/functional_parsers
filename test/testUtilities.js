@@ -1,6 +1,6 @@
 var requirejs = require('requirejs');
 
-requirejs(['Utilities.js', 'chai'], function(Utilities, chai) {
+requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Utilities, chai) {
   "use strict";
 
   var expect = chai.expect;
@@ -44,6 +44,16 @@ requirejs(['Utilities.js', 'chai'], function(Utilities, chai) {
 
     it('Utilities object\'s equalsArray property is a function', function() {
       expect(Utilities.equalsArray).to.be.a('function');
+    });
+
+
+    it('Utilities object has \'containsResult\' property', function() {
+      expect(Utilities).to.have.property('containsResult');
+    });
+
+
+    it('Utilities object\'s containsResult property is a function', function() {
+      expect(Utilities.containsResult).to.be.a('function');
     });
   });
 
@@ -247,5 +257,48 @@ requirejs(['Utilities.js', 'chai'], function(Utilities, chai) {
     it('equalsArray true for arrays with subarrays (1)', makePassArrayTest([1, 2, [3, 4]], [1, 2, [3, 4]] ));
     it('equalsArray true for arrays with subarrays (1)', makePassArrayTest([[7, 8], [9, 10]], [[7, 8], [9, 10]]));
   });
-});
 
+
+  describe('containsResult', function() {
+    var containsResult = Utilities.containsResult;
+
+    var makeContainsResultTest = function(r, v, input, expected) {
+      return function() {
+        var needle = ParseResult(r, v);
+        expect(containsResult(needle, input)).to.equal(expected);
+      };
+    };
+
+
+    var props = [{type: 'string', value: 'a'},
+                 {type: 'array', value: ['b']},
+                 {type: 'value', value: 7}];
+
+
+    var nonEmpty = [ParseResult('c', 'd'), ParseResult('c', ['d']), ParseResult('c', 42),
+                    ParseResult(['c'], 'd'), ParseResult(['c'], ['d']), ParseResult(['c'], 42)];
+
+    props.forEach(function(remainingProp, i) {
+      // The value type has no relevance for input
+      if (i === props.length - 1)
+        return;
+
+      var rType = remainingProp.type;
+      var rValue = remainingProp.value;
+
+      props.forEach(function(valueProp) {
+      var vType = valueProp.type;
+      var vValue = valueProp.value;
+
+        it('containsResult fails on empty list, when remaining has type ' + rType +
+           ' and value has type ' + vType, makeContainsResultTest(rValue, vValue, [], false));
+
+        it('containsResult fails on nonempty list without result, when remaining has type ' + rType +
+           ' and value has type ' + vType, makeContainsResultTest(rValue, vValue, nonEmpty, false));
+
+        it('containsResult passes on nonempty list with result, when remaining has type ' + rType +
+           ' and value has type ' + vType, makeContainsResultTest(rValue, vValue, nonEmpty.concat(ParseResult(rValue, vValue)), true));
+      });
+    });
+  });
+});

@@ -35,6 +35,16 @@ requirejs(['Utilities.js', 'chai'], function(Utilities, chai) {
     it('Utilities object\'s getFinalValue property is a function', function() {
       expect(Utilities.getFinalValue).to.be.a('function');
     });
+
+
+    it('Utilities object has \'equalsArray\' property', function() {
+      expect(Utilities).to.have.property('equalsArray');
+    });
+
+
+    it('Utilities object\'s equalsArray property is a function', function() {
+      expect(Utilities.equalsArray).to.be.a('function');
+    });
   });
 
 
@@ -163,6 +173,79 @@ requirejs(['Utilities.js', 'chai'], function(Utilities, chai) {
 
 
     makeCommonTests(accepts, 'accepts', makeFailedParseTest, makeSuccessParseTest);
+  });
+
+
+  describe('equalsArray', function() {
+    var equalsArray = Utilities.equalsArray;
+
+    // Generate a whole bunch of tests
+    var nonArrays = [{type: 'number', value: 1},
+                     {type: 'function', value: function() {}},
+                     {type: 'object', value: {}},
+                     {type: 'null', value: null},
+                     {type: 'undefined', value: undefined},
+                     {type: 'boolean', value: false},
+                     {type: 'string', value: ''}];
+
+
+    var makeFailArrayTest = function(lhs, rhs) {
+      return function() {
+        expect(equalsArray(lhs, rhs)).to.equal(false);
+      };
+    };
+
+
+    var rhsIterated = false;
+    nonArrays.forEach(function(l) {
+      var lhsType = l.type;
+      var lhs = l.value;
+ 
+      it('equalsArray returns false with ' + lhsType + ' on LHS, empty array on RHS',
+         makeFailArrayTest(lhs, []));
+
+      it('equalsArray returns false with ' + lhsType + ' on LHS, nonempty array on RHS',
+         makeFailArrayTest(lhs, [1, 2, 3]));
+
+      nonArrays.forEach(function(r, i) {
+        var rhsType = r.type;
+        var rhs = r.value;
+
+        if (!rhsIterated) {
+          it('equalsArray returns false with empty array on LHS, ' + rhsType + ' on RHS',
+           makeFailArrayTest([], rhs));
+
+          it('equalsArray returns false with nonempty array on LHS, ' + rhsType + ' on RHS',
+             makeFailArrayTest([1, 2, 3], rhs));
+
+          if (i === nonArrays.length - 1)
+            rhsIterated = true;
+        }
+
+        it('equalsArray returns false with ' + lhsType + ' on LHS, ' + rhsType + ' on RHS',
+           makeFailArrayTest(lhs, rhs));
+      });
+    });
+
+
+    it('equalsArray false for arrays with different lengths (1)', makeFailArrayTest([1, 2], [1, 2, 3]));
+    it('equalsArray false for arrays with different lengths (2)', makeFailArrayTest([1, 2, 3], [1, 2]));
+    it('equalsArray false for arrays with different values', makeFailArrayTest([1, 2], [3, 2]));
+    it('equalsArray false for arrays with different subarrays', makeFailArrayTest([1, 2, [3, 4]], [1, 2, [7, 8]]));
+
+
+    var makePassArrayTest = function(lhs, rhs) {
+      return function() {
+        expect(equalsArray(lhs, rhs)).to.equal(true);
+      };
+    };
+
+
+    it('equalsArray true for two empty arrays', makePassArrayTest([], []));
+    it('equalsArray true for arrays with same values (1)', makePassArrayTest([1, 2], [1, 2]));
+    it('equalsArray true for arrays with same values (2)', makePassArrayTest([3, 4, 5], [3, 4, 5]));
+    it('equalsArray true for arrays with subarrays (1)', makePassArrayTest([1, 2, [3, 4]], [1, 2, [3, 4]] ));
+    it('equalsArray true for arrays with subarrays (1)', makePassArrayTest([[7, 8], [9, 10]], [[7, 8], [9, 10]]));
   });
 });
 

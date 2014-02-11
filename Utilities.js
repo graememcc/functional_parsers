@@ -7,6 +7,26 @@ define([], function() {
   };
 
 
+  var equalsArray = function(l, r) {
+    if (!Array.isArray(l) || !Array.isArray(r))
+      return false;
+
+    if (l.length !== r.length)
+      return false;
+
+    for (var i = 0, len = l.length; i < len; i++) {
+      var left = l[i];
+      var right = r[i];
+
+      var equal = Array.isArray(left) ? equalsArray(left, right) : left === right;
+      if (!equal)
+        return false;
+    }
+
+    return true;
+  };
+
+
   var getFinalValue = function(results) {
     var resultFound = false;
     var finalResult = null;
@@ -34,6 +54,7 @@ define([], function() {
 
   return {
     accepts: accepts,
+    equalsArray: equalsArray,
     getFinalValue: getFinalValue,
     hasCompleteParse: hasCompleteParse
   };

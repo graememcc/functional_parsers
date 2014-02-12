@@ -75,6 +75,16 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
     it('Utilities object\'s printParses property is a function', function() {
       expect(Utilities.printParses).to.be.a('function');
     });
+
+
+    it('Utilities object has \'logAccepts\' property', function() {
+      expect(Utilities).to.have.property('logAccepts');
+    });
+
+
+    it('Utilities object\'s logAccepts property is a function', function() {
+      expect(Utilities.logAccepts).to.be.a('function');
+    });
   });
 
 
@@ -323,16 +333,17 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
   });
 
 
-  describe('logFinalValue', function() {
-    var makeFakeLogger = function() {
-      var flog = function() {
-        flog.params = flog.params.concat([].slice.call(arguments));
-      };
-      flog.params = [];
-      return flog;
+  // Utility function for the next three test sequences
+  var makeFakeLogger = function() {
+    var flog = function() {
+      flog.params += [].slice.call(arguments).join('');
     };
+    flog.params = '';
+    return flog;
+  };
 
 
+  describe('logFinalValue', function() {
     var logFinalValue = Utilities.logFinalValue;
     var equalsArray = Utilities.equalsArray;
 
@@ -352,7 +363,7 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
       var expected = logFinalValue.parserFailed;
 
       logFinalValue([], fakeLogger);
-      expect(fakeLogger.params.join('')).to.equal(expected);
+      expect(fakeLogger.params).to.equal(expected);
     });
 
 
@@ -362,7 +373,7 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
       var expected = logFinalValue.noFinalValue;
 
       logFinalValue(fakeResults, fakeLogger);
-      expect(fakeLogger.params.join('')).to.equal(expected);
+      expect(fakeLogger.params).to.equal(expected);
     });
 
 
@@ -372,7 +383,7 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
       var fakeResults = [ParseResult('a', 'b'), ParseResult('', expected)];
 
       logFinalValue(fakeResults, fakeLogger);
-      expect(fakeLogger.params.join('')).to.equal(expected);
+      expect(fakeLogger.params).to.equal(expected);
     });
 
 
@@ -382,21 +393,12 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
       var fakeResults = [ParseResult('a', 'b'), ParseResult('', expected)];
 
       logFinalValue(fakeResults, fakeLogger);
-      expect(fakeLogger.params.join('')).to.equal(expected.toString());
+      expect(fakeLogger.params).to.equal(expected.toString());
     });
   });
 
 
   describe('printParses', function() {
-    var makeFakeLogger = function() {
-      var flog = function() {
-        flog.params = flog.params.concat([].slice.call(arguments));
-      };
-      flog.params = [];
-      return flog;
-    };
-
-
     var printParses = Utilities.printParses;
     var equalsArray = Utilities.equalsArray;
 
@@ -404,7 +406,7 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
     it('printParses prints newline for parse failure', function() {
       var fakeLogger = makeFakeLogger();
       printParses([], fakeLogger);
-      expect(fakeLogger.params.join('')).to.equal('\n');
+      expect(fakeLogger.params).to.equal('\n');
     });
 
 
@@ -415,7 +417,104 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
       expected = expected.join('\n') + '\n';
 
       printParses(fakeResults, fakeLogger);
-      expect(fakeLogger.params.join('')).to.equal(expected);
+      expect(fakeLogger.params).to.equal(expected);
+    });
+  });
+
+
+  describe('logAccepts', function() {
+    var makeFakeParser = function(result) {
+      var fake = function(input) {
+        fake.called = true;
+        fake.args = [].slice.call(arguments);
+
+        if (result)
+          return [ParseResult('', null)];
+        return [ParseResult('a', null)];
+      };
+      fake.called = false;
+      fake.args = null;
+
+      return fake;
+    };
+
+
+    var logAccepts = Utilities.logAccepts;
+    var message1 = 'my message1';
+    var message2 = 'my message2';
+    var input1 = 'SOME INPUT';
+    var input2 = 'SOME MORE INPUT';
+
+
+    it('logAccepts calls accepts correctly', function() {
+      var fakeParser = makeFakeParser(true);
+      var fakeLogger = makeFakeLogger();
+      logAccepts(message1, fakeParser, input1, fakeLogger);
+      expect(fakeParser.called).to.equal(true);
+      expect(fakeParser.args.length).to.equal(1);
+      expect(fakeParser.args[0]).to.equal(input1);
+
+      fakeParser = makeFakeParser(true);
+      logAccepts(message1, fakeParser, input2, fakeLogger);
+      expect(fakeParser.args.length).to.equal(1);
+      expect(fakeParser.args[0]).to.equal(input2);
+    });
+
+
+    it('logAccepts logs the message', function() {
+      var fakeParser = makeFakeParser(true);
+      var fakeLogger = makeFakeLogger();
+      logAccepts(message1, fakeParser, input1, fakeLogger);
+      expect(fakeLogger.params.indexOf(message1)).to.be.greaterThan(-1);
+
+      fakeLogger = makeFakeLogger();
+      logAccepts(message2, fakeParser, input1, fakeLogger);
+      expect(fakeLogger.params.indexOf(message2)).to.be.greaterThan(-1);
+    });
+
+
+    it('logAccepts logs the input', function() {
+      var fakeParser = makeFakeParser(true);
+      var fakeLogger = makeFakeLogger();
+      logAccepts(message1, fakeParser, input1, fakeLogger);
+      expect(fakeLogger.params.indexOf(input1)).to.be.greaterThan(-1);
+
+      fakeLogger = makeFakeLogger();
+      logAccepts(message1, fakeParser, input2, fakeLogger);
+      expect(fakeLogger.params.indexOf(input2)).to.be.greaterThan(-1);
+    });
+
+
+    it('logAccepts logs the result', function() {
+      var result = true;
+      var fakeParser = makeFakeParser(result);
+      var fakeLogger = makeFakeLogger();
+      logAccepts(message1, fakeParser, input1, fakeLogger);
+      expect(fakeLogger.params.indexOf(result)).to.be.greaterThan(-1);
+
+      result = false;
+      fakeParser = makeFakeParser(result);
+      fakeLogger = makeFakeLogger();
+      logAccepts(message1, fakeParser, input1, fakeLogger);
+      expect(fakeLogger.params.indexOf(result)).to.be.greaterThan(-1);
+    });
+
+
+
+    it('logAccepts logs in the correct order', function() {
+      var result = true;
+      var fakeParser = makeFakeParser(result);
+      var fakeLogger = makeFakeLogger();
+      logAccepts(message1, fakeParser, input1, fakeLogger);
+      expect(fakeLogger.params.indexOf(input1)).to.be.greaterThan(fakeLogger.params.indexOf(message1));
+      expect(fakeLogger.params.indexOf(result)).to.be.greaterThan(fakeLogger.params.indexOf(input1));
+
+      result = false;
+      fakeParser = makeFakeParser(result);
+      fakeLogger = makeFakeLogger();
+      logAccepts(message2, fakeParser, input2, fakeLogger);
+      expect(fakeLogger.params.indexOf(input2)).to.be.greaterThan(fakeLogger.params.indexOf(message2));
+      expect(fakeLogger.params.indexOf(result)).to.be.greaterThan(fakeLogger.params.indexOf(input2));
     });
   });
 });

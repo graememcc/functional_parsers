@@ -7,6 +7,14 @@ define([], function() {
   };
 
 
+  var logAccepts = function(message, parser, input, logger) {
+    if (typeof(logger) !== 'function')
+      logger = console.log.bind(console);
+
+    logger(message, input, accepts(parser, input));
+  };
+
+
   var containsResult = function(needle, results) {
     return results.some(function(result) {
       return result.equals(needle);
@@ -101,6 +109,7 @@ define([], function() {
     equalsArray: equalsArray,
     getFinalValue: getFinalValue,
     hasCompleteParse: hasCompleteParse,
+    logAccepts: logAccepts,
     logFinalValue: logFinalValue,
     printParses: printParses
   };

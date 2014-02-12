@@ -52,6 +52,27 @@ define([], function() {
   };
 
 
+  var logFinalValue = function(results, logger) {
+    if (typeof(logger) !== 'function')
+      logger = console.log.bind(console);
+
+    if (results.length === 0) {
+      logger(logFinalValue.parserFailed);
+      return;
+    }
+
+    var val = null;
+    try {
+      val = getFinalValue(results);
+      logger(val.toString());
+    } catch (e) {
+      logger(logFinalValue.noFinalValue);
+    }
+  };
+  logFinalValue.parserFailed = '*** PARSE FAILED ***';
+  logFinalValue.noFinalValue = '*** INCOMPLETE PARSE: NO FINAL VALUE ***';
+
+
   var hasCompleteParse = function(results) {
     return results.some(function(result) {
       return result.remaining.length === 0;
@@ -64,6 +85,7 @@ define([], function() {
     containsResult: containsResult,
     equalsArray: equalsArray,
     getFinalValue: getFinalValue,
+    logFinalValue: logFinalValue,
     hasCompleteParse: hasCompleteParse
   };
 });

@@ -55,6 +55,16 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
     it('Utilities object\'s containsResult property is a function', function() {
       expect(Utilities.containsResult).to.be.a('function');
     });
+
+
+    it('Utilities object has \'logFinalValue\' property', function() {
+      expect(Utilities).to.have.property('logFinalValue');
+    });
+
+
+    it('Utilities object\'s logFinalValue property is a function', function() {
+      expect(Utilities.logFinalValue).to.be.a('function');
+    });
   });
 
 
@@ -210,7 +220,7 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
     nonArrays.forEach(function(l) {
       var lhsType = l.type;
       var lhs = l.value;
- 
+
       it('equalsArray returns false with ' + lhsType + ' on LHS, empty array on RHS',
          makeFailArrayTest(lhs, []));
 
@@ -299,6 +309,70 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
         it('containsResult passes on nonempty list with result, when remaining has type ' + rType +
            ' and value has type ' + vType, makeContainsResultTest(rValue, vValue, nonEmpty.concat(ParseResult(rValue, vValue)), true));
       });
+    });
+  });
+
+
+  describe('logFinalValue', function() {
+    var makeFakeLogger = function() {
+      var flog = function() {
+        flog.params = flog.params.concat([].slice.call(arguments));
+      };
+      flog.params = [];
+      return flog;
+    };
+
+
+    var logFinalValue = Utilities.logFinalValue;
+    var equalsArray = Utilities.equalsArray;
+
+
+    it('logFinalValue has \'parserFailed\' property', function() {
+      expect(logFinalValue).to.have.property('parserFailed');
+    });
+
+
+    it('logFinalValue has \'noFinalValue\' property', function() {
+      expect(logFinalValue).to.have.property('noFinalValue');
+    });
+
+
+    it('logFinalValue prints \'parser failed\' message for failure', function() {
+      var fakeLogger = makeFakeLogger();
+      var expected = logFinalValue.parserFailed;
+
+      logFinalValue([], fakeLogger);
+      expect(fakeLogger.params.join('')).to.equal(expected);
+    });
+
+
+    it('logFinalValue prints \'no final value\' message for array containing only partial results', function() {
+      var fakeLogger = makeFakeLogger();
+      var fakeResults = [ParseResult('a', 'b'), ParseResult('cd', 'e')];
+      var expected = logFinalValue.noFinalValue;
+
+      logFinalValue(fakeResults, fakeLogger);
+      expect(fakeLogger.params.join('')).to.equal(expected);
+    });
+
+
+    it('logFinalValue prints final result if present', function() {
+      var expected = 'mozilla';
+      var fakeLogger = makeFakeLogger();
+      var fakeResults = [ParseResult('a', 'b'), ParseResult('', expected)];
+
+      logFinalValue(fakeResults, fakeLogger);
+      expect(fakeLogger.params.join('')).to.equal(expected);
+    });
+
+
+    it('logFinalValue uses final result\'s toString method', function() {
+      var expected = ['d', 'e', 'f'];
+      var fakeLogger = makeFakeLogger();
+      var fakeResults = [ParseResult('a', 'b'), ParseResult('', expected)];
+
+      logFinalValue(fakeResults, fakeLogger);
+      expect(fakeLogger.params.join('')).to.equal(expected.toString());
     });
   });
 });

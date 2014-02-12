@@ -65,6 +65,16 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
     it('Utilities object\'s logFinalValue property is a function', function() {
       expect(Utilities.logFinalValue).to.be.a('function');
     });
+
+
+    it('Utilities object has \'printParses\' property', function() {
+      expect(Utilities).to.have.property('printParses');
+    });
+
+
+    it('Utilities object\'s printParses property is a function', function() {
+      expect(Utilities.printParses).to.be.a('function');
+    });
   });
 
 
@@ -373,6 +383,39 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
 
       logFinalValue(fakeResults, fakeLogger);
       expect(fakeLogger.params.join('')).to.equal(expected.toString());
+    });
+  });
+
+
+  describe('printParses', function() {
+    var makeFakeLogger = function() {
+      var flog = function() {
+        flog.params = flog.params.concat([].slice.call(arguments));
+      };
+      flog.params = [];
+      return flog;
+    };
+
+
+    var printParses = Utilities.printParses;
+    var equalsArray = Utilities.equalsArray;
+
+
+    it('printParses prints newline for parse failure', function() {
+      var fakeLogger = makeFakeLogger();
+      printParses([], fakeLogger);
+      expect(fakeLogger.params.join('')).to.equal('\n');
+    });
+
+
+    it('printParses prints parse results', function() {
+      var fakeLogger = makeFakeLogger();
+      var fakeResults = [ParseResult('a', 'b'), ParseResult('cd', 'e')];
+      var expected = fakeResults.map(function(r) {return r.toString();});
+      expected = expected.join('\n') + '\n';
+
+      printParses(fakeResults, fakeLogger);
+      expect(fakeLogger.params.join('')).to.equal(expected);
     });
   });
 });

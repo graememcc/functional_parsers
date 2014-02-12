@@ -73,6 +73,21 @@ define([], function() {
   logFinalValue.noFinalValue = '*** INCOMPLETE PARSE: NO FINAL VALUE ***';
 
 
+  var printParses = function(results, logger) {
+    if (typeof(logger) !== 'function')
+      logger = console.log.bind(console);
+
+    if (results.length === 0) {
+      logger('\n');
+      return;
+    }
+
+    results.forEach(function(r) {
+      logger(r.toString(), '\n');
+    });
+  };
+
+
   var hasCompleteParse = function(results) {
     return results.some(function(result) {
       return result.remaining.length === 0;
@@ -85,7 +100,8 @@ define([], function() {
     containsResult: containsResult,
     equalsArray: equalsArray,
     getFinalValue: getFinalValue,
+    hasCompleteParse: hasCompleteParse,
     logFinalValue: logFinalValue,
-    hasCompleteParse: hasCompleteParse
+    printParses: printParses
   };
 });

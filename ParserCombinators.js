@@ -48,8 +48,14 @@ define(['ParseResult.js'], function(ParseResult) {
   var epsilon = succeed(null);
 
 
+  var fail = Parser(function(input) {
+    return [];
+  });
+
+
   return {
     epsilon: epsilon,
+    fail: fail,
     satisfy: satisfy,
     succeed: succeed,
     symbol: symbol,

@@ -57,6 +57,16 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     it('ParserCombinators object\'s epsilon property is a function', function() {
       expect(ParserCombinators.epsilon).to.be.a('function');
     });
+
+
+    it('ParserCombinators object has \'fail\' property', function() {
+      expect(ParserCombinators).to.have.property('fail');
+    });
+
+
+    it('ParserCombinators object\'s fail property is a function', function() {
+      expect(ParserCombinators.fail).to.be.a('function');
+    });
   });
 
 
@@ -488,6 +498,42 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var input = 'abc';
       var parseResult = getResults(epsilon, input);
       expect(parseResult.length).to.equal(1);
+    });
+  });
+
+
+  describe('Fail', function() {
+    var fail = ParserCombinators.fail;
+
+
+    it('Fail is a function', function() {
+      expect(fail).to.be.a('function');
+    });
+
+
+    it('Fail has length 1', function() {
+      expect(fail.length).to.equal(1);
+    });
+
+
+    it('Fail fails with input (1)', function() {
+      var input = 'abc';
+      var parseResult = getResults(fail, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Fail fails with input (2)', function() {
+      var input = ['d', 'e', 'f'];
+      var parseResult = getResults(fail, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Fail fails with empty input', function() {
+      var input = '';
+      var parseResult = getResults(fail, input);
+      expect(parseResult).to.deep.equal([]);
     });
   });
 });

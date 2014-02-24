@@ -37,6 +37,26 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     it('ParserCombinators object\'s satisfy property is a function', function() {
       expect(ParserCombinators.satisfy).to.be.a('function');
     });
+
+
+    it('ParserCombinators object has \'succeed\' property', function() {
+      expect(ParserCombinators).to.have.property('succeed');
+    });
+
+
+    it('ParserCombinators object\'s succeed property is a function', function() {
+      expect(ParserCombinators.succeed).to.be.a('function');
+    });
+
+
+    it('ParserCombinators object has \'epsilon\' property', function() {
+      expect(ParserCombinators).to.have.property('epsilon');
+    });
+
+
+    it('ParserCombinators object\'s epsilon property is a function', function() {
+      expect(ParserCombinators.epsilon).to.be.a('function');
+    });
   });
 
 
@@ -357,6 +377,116 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var remainder = 'bc';
       var parser = satisfy(always);
       var parseResult = getResults(parser, expected.concat(remainder));
+      expect(parseResult.length).to.equal(1);
+    });
+  });
+
+
+  describe('Succeed combinator', function() {
+    var succeed = ParserCombinators.succeed;
+
+
+    it('Succeed returns a function', function() {
+      expect(succeed()).to.be.a('function');
+    });
+
+
+    it('Returned function has length 1', function() {
+      expect(succeed().length).to.equal(1);
+    });
+
+
+    it('Returned parser succeeds with supplied value (1)', function() {
+      var value = 1;
+      var parser = succeed(value);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(Utilities.containsResult(ParseResult(input, value), parseResult)).to.be.true;
+    });
+
+
+    it('Returned parser succeeds with supplied value (2)', function() {
+      var value = 'a';
+      var parser = succeed(value);
+      var input = ['d', 'e', 'f'];
+      var parseResult = getResults(parser, input);
+      expect(Utilities.containsResult(ParseResult(input, value), parseResult)).to.be.true;
+    });
+
+
+    it('Returned parser succeeds with empty input (1)', function() {
+      var value = 1;
+      var parser = succeed(value);
+      var input = '';
+      var parseResult = getResults(parser, input);
+      expect(Utilities.containsResult(ParseResult(input, value), parseResult)).to.be.true;
+    });
+
+
+    it('Returned parser succeeds with supplied value (2)', function() {
+      var value = 'a';
+      var parser = succeed(value);
+      var input = [];
+      var parseResult = getResults(parser, input);
+      expect(Utilities.containsResult(ParseResult(input, value), parseResult)).to.be.true;
+    });
+
+
+    it('Returned parser returns single result', function() {
+      var value = 1;
+      var parser = succeed(value);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(1);
+    });
+  });
+
+
+  describe('Epsilon', function() {
+    var epsilon = ParserCombinators.epsilon;
+
+
+    it('Epsilon is a function', function() {
+      expect(epsilon).to.be.a('function');
+    });
+
+
+    it('Epsilon has length 1', function() {
+      expect(epsilon.length).to.equal(1);
+    });
+
+
+    it('Epsilon succeeds with null', function() {
+      var input = 'abc';
+      var parseResult = getResults(epsilon, input);
+      expect(Utilities.containsResult(ParseResult(input, null), parseResult)).to.be.true;
+    });
+
+
+    it('Epsilon succeeds with null (2)', function() {
+      var input = ['d', 'e', 'f'];
+      var parseResult = getResults(epsilon, input);
+      expect(Utilities.containsResult(ParseResult(input, null), parseResult)).to.be.true;
+    });
+
+
+    it('Epsilon succeeds with empty input (1)', function() {
+      var input = '';
+      var parseResult = getResults(epsilon, input);
+      expect(Utilities.containsResult(ParseResult(input, null), parseResult)).to.be.true;
+    });
+
+
+    it('Returned parser epsilons with supplied value (2)', function() {
+      var input = [];
+      var parseResult = getResults(epsilon, input);
+      expect(Utilities.containsResult(ParseResult(input, null), parseResult)).to.be.true;
+    });
+
+
+    it('Returned parser returns single result', function() {
+      var input = 'abc';
+      var parseResult = getResults(epsilon, input);
       expect(parseResult.length).to.equal(1);
     });
   });

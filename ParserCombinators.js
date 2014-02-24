@@ -6,16 +6,21 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
-  var matchFirst = function(value, equals) {
-    if (typeof(equals) !== 'function')
-      equals = function(a, b) {return a === b};
-
+  var satisfy = function(pred) {
     return Parser(function(input) {
-      if (equals(input[0], value))
+      if (input.length > 0 && pred(input[0]))
         return [ParseResult(input.slice(1), input[0])];
 
       return [];
     });
+  };
+
+
+  var matchFirst = function(value, equals) {
+    if (typeof(equals) !== 'function')
+      equals = function(a, b) {return a === b};
+
+    return satisfy(equals.bind(null, value));
   };
 
 
@@ -34,6 +39,7 @@ define(['ParseResult.js'], function(ParseResult) {
 
 
   return {
+    satisfy: satisfy,
     symbol: symbol,
     token: token
   };

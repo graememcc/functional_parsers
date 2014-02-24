@@ -6,17 +6,35 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
-  var symbol = function(symbol) {
-    return Parser(function(input) {
-      if (input[0] !== symbol)
-        return [];
+  var matchFirst = function(value, equals) {
+    if (typeof(equals) !== 'function')
+      equals = function(a, b) {return a === b};
 
-      return [ParseResult(input.slice(1), symbol)];
+    return Parser(function(input) {
+      if (equals(input[0], value))
+        return [ParseResult(input.slice(1), input[0])];
+
+      return [];
     });
   };
 
 
+  var symbol = function(symbol) {
+    return matchFirst(symbol);
+  };
+
+
+  var token = function(expectedToken) {
+    var equals = function(a, b) {
+      return a.equals(b);
+    };
+
+    return matchFirst(expectedToken, equals);
+  };
+
+
   return {
-    symbol: symbol
+    symbol: symbol,
+    token: token
   };
 });

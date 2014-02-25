@@ -9,93 +9,27 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
 
   describe('ParserCombinators exports', function() {
-    it('ParserCombinators object has \'symbol\' property', function() {
-      expect(ParserCombinators).to.have.property('symbol');
-    });
+    // Generator functions for the property tests
+    var makePropertyTest = function(prop) {
+      return function() {
+        expect(ParserCombinators).to.have.property(prop);
+      };
+    };
 
 
-    it('ParserCombinators object\'s symbol property is a function', function() {
-      expect(ParserCombinators.symbol).to.be.a('function');
-    });
+    var makeFunctionTest = function(prop) {
+      return function() {
+        expect(ParserCombinators[prop]).to.be.a('function');
+      };
+    };
 
 
-    it('ParserCombinators object has \'token\' property', function() {
-      expect(ParserCombinators).to.have.property('token');
-    });
+    var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
+                 'alt', 'strictAlt', 'seq'];
 
-
-    it('ParserCombinators object\'s token property is a function', function() {
-      expect(ParserCombinators.token).to.be.a('function');
-    });
-
-
-    it('ParserCombinators object has \'satisfy\' property', function() {
-      expect(ParserCombinators).to.have.property('satisfy');
-    });
-
-
-    it('ParserCombinators object\'s satisfy property is a function', function() {
-      expect(ParserCombinators.satisfy).to.be.a('function');
-    });
-
-
-    it('ParserCombinators object has \'succeed\' property', function() {
-      expect(ParserCombinators).to.have.property('succeed');
-    });
-
-
-    it('ParserCombinators object\'s succeed property is a function', function() {
-      expect(ParserCombinators.succeed).to.be.a('function');
-    });
-
-
-    it('ParserCombinators object has \'epsilon\' property', function() {
-      expect(ParserCombinators).to.have.property('epsilon');
-    });
-
-
-    it('ParserCombinators object\'s epsilon property is a function', function() {
-      expect(ParserCombinators.epsilon).to.be.a('function');
-    });
-
-
-    it('ParserCombinators object has \'fail\' property', function() {
-      expect(ParserCombinators).to.have.property('fail');
-    });
-
-
-    it('ParserCombinators object\'s fail property is a function', function() {
-      expect(ParserCombinators.fail).to.be.a('function');
-    });
-
-
-    it('ParserCombinators object has \'alt\' property', function() {
-      expect(ParserCombinators).to.have.property('alt');
-    });
-
-
-    it('ParserCombinators object\'s alt property is a function', function() {
-      expect(ParserCombinators.alt).to.be.a('function');
-    });
-
-
-    it('ParserCombinators object has \'strictAlt\' property', function() {
-      expect(ParserCombinators).to.have.property('strictAlt');
-    });
-
-
-    it('ParserCombinators object\'s strictAlt property is a function', function() {
-      expect(ParserCombinators.strictAlt).to.be.a('function');
-    });
-
-
-    it('ParserCombinators object has \'seq\' property', function() {
-      expect(ParserCombinators).to.have.property('seq');
-    });
-
-
-    it('ParserCombinators object\'s seq property is a function', function() {
-      expect(ParserCombinators.seq).to.be.a('function');
+    props.forEach(function(p) {
+      it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(p));
+      it('ParserCombinator object\'s ' + p + ' property is a function', makeFunctionTest(p));
     });
   });
 

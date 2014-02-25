@@ -67,6 +67,26 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     it('ParserCombinators object\'s fail property is a function', function() {
       expect(ParserCombinators.fail).to.be.a('function');
     });
+
+
+    it('ParserCombinators object has \'alt\' property', function() {
+      expect(ParserCombinators).to.have.property('alt');
+    });
+
+
+    it('ParserCombinators object\'s alt property is a function', function() {
+      expect(ParserCombinators.alt).to.be.a('function');
+    });
+
+
+    it('ParserCombinators object has \'strictAlt\' property', function() {
+      expect(ParserCombinators).to.have.property('strictAlt');
+    });
+
+
+    it('ParserCombinators object\'s strictAlt property is a function', function() {
+      expect(ParserCombinators.strictAlt).to.be.a('function');
+    });
   });
 
 
@@ -534,6 +554,140 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var input = '';
       var parseResult = getResults(fail, input);
       expect(parseResult).to.deep.equal([]);
+    });
+  });
+
+
+  describe('Alt combinator', function() {
+    var alt =  ParserCombinators.alt;
+
+
+    it('Alt returns a function', function() {
+      var p1 = function(input) {};
+      var p2 = function(input) {};
+      var parser = alt(p1, p2);
+      expect(parser).to.be.a('function');
+    });
+
+
+    it('Parser returned by alt has length 1', function() {
+      var p1 = function(input) {};
+      var p2 = function(input) {};
+      var parser = alt(p1, p2);
+      expect(parser.length).to.equal(1);
+    });
+
+
+    it('Parser returned by alt fails if both alternatives fail', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.fail;
+      var parser = alt(p1, p2);
+      var result = getResults(parser, 'abc');
+      expect(result).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by alt returns first parser\'s results if second parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = function(input) {return result;};
+      var p2 = ParserCombinators.fail;
+
+      var parser = alt(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(p1(input));
+    });
+
+
+    it('Parser returned by alt returns second parser\'s results if first parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = ParserCombinators.fail;
+      var p2 = function(input) {return result;};
+
+      var parser = alt(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(p2(input));
+    });
+
+
+    it('Parser returned by alt returns both parsers\' results if both parsers succeed', function() {
+      var result1 = [ParseResult('a', 'b')];
+      var result2 = [ParseResult('c', 'd')];
+      var p1 = function(input) {return result1;};
+      var p2 = function(input) {return result2;};
+
+      var parser = alt(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(p1(input).concat(p2(input)));
+    });
+  });
+
+
+  describe('StrictAlt combinator', function() {
+    var strictAlt =  ParserCombinators.strictAlt;
+
+
+    it('StrictAlt returns a function', function() {
+      var p1 = function(input) {};
+      var p2 = function(input) {};
+      var parser = strictAlt(p1, p2);
+      expect(parser).to.be.a('function');
+    });
+
+
+    it('Parser returned by strictAlt has length 1', function() {
+      var p1 = function(input) {};
+      var p2 = function(input) {};
+      var parser = strictAlt(p1, p2);
+      expect(parser.length).to.equal(1);
+    });
+
+
+    it('Parser returned by strictAlt fails if both alternatives fail', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.fail;
+      var parser = strictAlt(p1, p2);
+      var result = getResults(parser, 'abc');
+      expect(result).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by strictAlt returns first parser\'s results if second parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = function(input) {return result;};
+      var p2 = ParserCombinators.fail;
+
+      var parser = strictAlt(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(p1(input));
+    });
+
+
+    it('Parser returned by strictAlt returns second parser\'s results if first parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = ParserCombinators.fail;
+      var p2 = function(input) {return result;};
+
+      var parser = strictAlt(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(p2(input));
+    });
+
+
+    it('Parser returned by strictAlt returns first parser\'s results if both parsers succeed', function() {
+      var result1 = [ParseResult('a', 'b')];
+      var result2 = [ParseResult('c', 'd')];
+      var p1 = function(input) {return result1;};
+      var p2 = function(input) {return result2;};
+
+      var parser = strictAlt(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(p1(input));
     });
   });
 });

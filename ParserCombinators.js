@@ -53,10 +53,30 @@ define(['ParseResult.js'], function(ParseResult) {
   });
 
 
+  var alt = function(p1, p2) {
+    return Parser(function(input) {
+      return p1(input).concat(p2(input));
+    });
+  };
+
+
+  var strictAlt = function(p1, p2) {
+    return Parser(function(input) {
+      var result = p1(input);
+      if (result.length > 0)
+        return result;
+
+      return p2(input);
+    });
+  };
+
+
   return {
+    alt: alt,
     epsilon: epsilon,
     fail: fail,
     satisfy: satisfy,
+    strictAlt: strictAlt,
     succeed: succeed,
     symbol: symbol,
     token: token

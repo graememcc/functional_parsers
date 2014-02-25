@@ -71,11 +71,29 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var seq = function(p1, p2) {
+    return Parser(function(input) {
+      var firstResults = p1(input);
+
+      var results = [];
+      firstResults.forEach(function(res) {
+        var secondResults = p2(res.remaining);
+        secondResults.forEach(function(res2) {
+          results.push(ParseResult(res2.remaining, [res.value, res2.value]));
+        });
+      });
+
+      return results;
+    });
+  };
+
+
   return {
     alt: alt,
     epsilon: epsilon,
     fail: fail,
     satisfy: satisfy,
+    seq: seq,
     strictAlt: strictAlt,
     succeed: succeed,
     symbol: symbol,

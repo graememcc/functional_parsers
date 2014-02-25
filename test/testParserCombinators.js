@@ -87,6 +87,16 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     it('ParserCombinators object\'s strictAlt property is a function', function() {
       expect(ParserCombinators.strictAlt).to.be.a('function');
     });
+
+
+    it('ParserCombinators object has \'seq\' property', function() {
+      expect(ParserCombinators).to.have.property('seq');
+    });
+
+
+    it('ParserCombinators object\'s seq property is a function', function() {
+      expect(ParserCombinators.seq).to.be.a('function');
+    });
   });
 
 
@@ -688,6 +698,126 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var input = 'abc';
       var parseResult = getResults(parser, input);
       expect(parseResult).to.deep.equal(p1(input));
+    });
+  });
+
+
+  describe('Seq combinator', function() {
+    var seq =  ParserCombinators.seq;
+
+
+    it('Seq returns a function', function() {
+      var p1 = function(input) {};
+      var p2 = function(input) {};
+      var parser = seq(p1, p2);
+      expect(parser).to.be.a('function');
+    });
+
+
+    it('Parser returned by seq has length 1', function() {
+      var p1 = function(input) {};
+      var p2 = function(input) {};
+      var parser = seq(p1, p2);
+      expect(parser.length).to.equal(1);
+    });
+
+
+    it('Parser returned by seq fails if both alternatives fail', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.fail;
+      var parser = seq(p1, p2);
+      var result = getResults(parser, 'abc');
+      expect(result).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by seq fails if first parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = ParserCombinators.fail;
+      var p2 = function(input) {return result;};
+
+      var parser = seq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by seq fails if second parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = function(input) {return result;};
+      var p2 = ParserCombinators.fail;
+
+      var parser = seq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by seq succeeds if both parsers succeed', function() {
+      var result1 = [ParseResult('a', 'b')];
+      var result2 = [ParseResult('c', 'd')];
+      var p1 = function(input) {return result1;};
+      var p2 = function(input) {return result2;};
+
+      var parser = seq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.not.deep.equal([]);
+    });
+
+
+    it('Returned parser calls second parser with results of first parser', function() {
+      var results = [ParseResult('a', 'b'), ParseResult('c', 'd'), ParseResult('e', 'f')];
+      var p1 = function(input) {return results;};
+      var p2 = function(input) {
+        p2.inputs.push(input);
+        return [input];
+      };
+      p2.inputs = [];
+
+      var parser = seq(p1, p2);
+      getResults(parser, '');
+      results.forEach(function(r) {
+        expect(p2.inputs.indexOf(r.remaining)).to.not.equal(-1);
+      });
+    });
+
+
+    it('Returned parser correctly combines values', function() {
+      var result1 = [ParseResult('a', 'b'), ParseResult('c', 'd'), ParseResult('e', 'f')];
+      var result2 = [ParseResult('g', 1), ParseResult('h', 2)];
+      var p1 = function(input) {return result1;};
+      var p2 = function(input) {return result2;};
+
+      var parser = seq(p1, p2);
+      var result = getResults(parser, '');
+      result1.forEach(function(r) {
+        result2.forEach(function(s) {
+          expect(Utilities.containsResult(ParseResult(s.remaining, [r.value, s.value]), result)).to.be.true;
+        });
+      });
+    });
+
+
+    it('Returned parser returns correct number of results', function() {
+      var results1 = [ParseResult('a', 'b'), ParseResult('c', 'd'), ParseResult('e', 'f')];
+      var results2 = {
+        'a': [ParseResult('g', 1), ParseResult('h', 2)],
+        'c': [ParseResult('i', 3)],
+        'e': [ParseResult('j', 4), ParseResult('k', 5), ParseResult('l', 6), ParseResult('m', 7)]
+      };
+      var p1 = function(input) {return results1;};
+      var p2 = function(input) {return results2[input];};
+
+      var resultCount = 0;
+      results1.forEach(function(r) {
+        resultCount += p2(r.remaining).length;
+      });
+
+      var parser = seq(p1, p2);
+      expect(getResults(parser, 'abc').length).to.equal(resultCount);
     });
   });
 });

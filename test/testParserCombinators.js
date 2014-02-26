@@ -8,30 +8,103 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   var getResults = Utilities.getResults;
 
 
+  // Generator functions for various tests
+  var makePropertyTest = function(obj, prop) {
+    return function() {
+      expect(obj).to.have.property(prop);
+    };
+  };
+
+
+  var makeFunctionTest = function(obj, prop) {
+    return function() {
+      expect(obj[prop]).to.be.a('function');
+    };
+  };
+
+
   describe('ParserCombinators exports', function() {
-    // Generator functions for the property tests
-    var makePropertyTest = function(prop) {
-      return function() {
-        expect(ParserCombinators).to.have.property(prop);
-      };
-    };
-
-
-    var makeFunctionTest = function(prop) {
-      return function() {
-        expect(ParserCombinators[prop]).to.be.a('function');
-      };
-    };
-
-
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
                  'alt', 'strictAlt', 'seq'];
 
     props.forEach(function(p) {
-      it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(p));
-      it('ParserCombinator object\'s ' + p + ' property is a function', makeFunctionTest(p));
+      it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
+      it('ParserCombinator object\'s ' + p + ' property is a function', makeFunctionTest(ParserCombinators, p));
     });
   });
+
+
+  // Bogus parser for the generator tests
+  var alwaysSlice = function(input) {
+    return [ParseResult(input.slice(1), input[0])];
+  };
+
+
+  // Generator function for a number of combinator tests
+  var makeDecoratorPropertyTests = function(name, parserMaker) {
+    var props = ['or', 'orElse'];
+    props.forEach(function(p) {
+      it(name + ' parser has \'' + p + '\' property', function() {
+        var parser = parserMaker();
+        makePropertyTest(parser, p)();
+      });
+
+
+      it(name + ' parser\'s \'' + p + '\' property is a function', function() {
+        var parser = parserMaker();
+        makeFunctionTest(parser, p)();
+      });
+
+
+      it(name + '\'s \'' + p + '\' function returns a parser', function() {
+        var parser = parserMaker();
+        var newParser = parser[p](alwaysSlice);
+        expect(newParser).to.be.a('function');
+        expect(newParser.length).to.equal(1);
+      });
+    });
+  };
+
+
+  var makeDecoratorTests = function(name, parserMaker) {
+    makeDecoratorPropertyTests(name, parserMaker);
+
+    // Need to do these outside of makeDecoratorPropertyTest or we'll infinite loop
+    var orMaker = function() {
+      var parser = parserMaker();
+      var or = parser.or(alwaysSlice);
+      return or;
+    };
+    makeDecoratorPropertyTests(name + '\'s ' + ' \'or\'', orMaker);
+
+
+    it(name + '\'s \'or\' parser works as expected', function() {
+      // Just have to guess at suitable input
+      var input = 'abcdef';
+      var parser = parserMaker();
+      var orResults = getResults(parser.or(alwaysSlice), input);
+      var altResults = getResults(ParserCombinators.alt(parser, alwaysSlice), input);
+      expect(orResults).to.deep.equal(altResults);
+    });
+
+
+    var orElseMaker = function() {
+      var parser = parserMaker();
+      var orElse = parser.orElse(alwaysSlice);
+      return orElse;
+    };
+    makeDecoratorPropertyTests(name + '\'s ' + ' \'orElse\'', orElseMaker);
+
+
+    it(name + '\'s \'orElse\' parser works as expected', function() {
+      // Just have to guess at suitable input
+      var input = 'abcdef';
+      var parser = parserMaker();
+      var orElseResults = getResults(parser.orElse(alwaysSlice), input);
+      var strictAltResults = getResults(ParserCombinators.strictAlt(parser, alwaysSlice), input);
+      expect(orElseResults).to.deep.equal(strictAltResults);
+    });
+  };
 
 
   describe('Symbol combinator', function() {
@@ -114,6 +187,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(aParser, 'ab');
       expect(parseResult.length).to.equal(1);
     });
+
+
+    makeDecoratorTests('symbol', function() {return symbol('a');});
   });
 
 
@@ -216,6 +292,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, [expectedToken, nextToken]);
       expect(parseResult.length).to.equal(1);
     });
+
+
+    makeDecoratorTests('token', function() {return token({equals: function(a) {return a === 'a';}});});
   });
 
 
@@ -353,6 +432,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, expected.concat(remainder));
       expect(parseResult.length).to.equal(1);
     });
+
+ 
+    makeDecoratorTests('satisfy', function() {return satisfy(function(s) {return s === 'a';})});
   });
 
 
@@ -413,6 +495,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, input);
       expect(parseResult.length).to.equal(1);
     });
+
+
+    makeDecoratorTests('succeed', function() {return succeed(1);});
   });
 
 
@@ -463,6 +548,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(epsilon, input);
       expect(parseResult.length).to.equal(1);
     });
+
+
+    makeDecoratorTests('epsilon', function() {return epsilon;});
   });
 
 
@@ -499,6 +587,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(fail, input);
       expect(parseResult).to.deep.equal([]);
     });
+
+
+    makeDecoratorTests('fail', function() {return fail;});
   });
 
 
@@ -566,6 +657,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, input);
       expect(parseResult).to.deep.equal(p1(input).concat(p2(input)));
     });
+
+
+    makeDecoratorTests('alt', function() {return alt(alwaysSlice, alwaysSlice);});
   });
 
 
@@ -633,6 +727,9 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, input);
       expect(parseResult).to.deep.equal(p1(input));
     });
+
+
+    makeDecoratorTests('strictAlt', function() {return strictAlt(alwaysSlice, alwaysSlice);});
   });
 
 
@@ -753,5 +850,8 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parser = seq(p1, p2);
       expect(getResults(parser, 'abc').length).to.equal(resultCount);
     });
+
+
+    makeDecoratorTests('seq', function() {return seq(alwaysSlice, alwaysSlice);});
   });
 });

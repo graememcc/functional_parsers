@@ -2,6 +2,14 @@ define(['ParseResult.js'], function(ParseResult) {
 
 
   var Parser = function(f) {
+    f.or = function(p2) {
+      return alt(this, p2);
+    };
+
+    f.orElse = function(p2) {
+      return strictAlt(this, p2);
+    };
+
     return f;
   };
 

@@ -42,7 +42,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
   // Generator function for a number of combinator tests
   var makeDecoratorPropertyTests = function(name, parserMaker) {
-    var props = ['or', 'orElse'];
+    var props = ['or', 'orElse', 'then'];
     props.forEach(function(p) {
       it(name + ' parser has \'' + p + '\' property', function() {
         var parser = parserMaker();
@@ -69,7 +69,6 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   var makeDecoratorTests = function(name, parserMaker) {
     makeDecoratorPropertyTests(name, parserMaker);
 
-    // Need to do these outside of makeDecoratorPropertyTest or we'll infinite loop
     var orMaker = function() {
       var parser = parserMaker();
       var or = parser.or(alwaysSlice);
@@ -103,6 +102,24 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var orElseResults = getResults(parser.orElse(alwaysSlice), input);
       var strictAltResults = getResults(ParserCombinators.strictAlt(parser, alwaysSlice), input);
       expect(orElseResults).to.deep.equal(strictAltResults);
+    });
+
+
+    var thenMaker = function() {
+      var parser = parserMaker();
+      var then = parser.then(alwaysSlice);
+      return then;
+    };
+    makeDecoratorPropertyTests(name + '\'s ' + ' \'then\'', thenMaker);
+
+
+    it(name + '\'s \'then\' parser works as expected', function() {
+      // Just have to guess at suitable input
+      var input = 'abcdef';
+      var parser = parserMaker();
+      var thenResults = getResults(parser.then(alwaysSlice), input);
+      var seqResults = getResults(ParserCombinators.seq(parser, alwaysSlice), input);
+      expect(thenResults).to.deep.equal(seqResults);
     });
   };
 

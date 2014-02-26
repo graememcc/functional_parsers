@@ -10,6 +10,10 @@ define(['ParseResult.js'], function(ParseResult) {
       return strictAlt(this, p2);
     };
 
+    f.then = function(p2) {
+      return seq(this, p2);
+    };
+
     return f;
   };
 

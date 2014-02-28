@@ -7,93 +7,27 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
 
 
   describe('Utilities exports', function() {
-    it('Utilities object has \'accepts\' property', function() {
-      expect(Utilities).to.have.property('accepts');
-    });
+    // Test generators
+    var makePropertyTest = function(obj, prop) {
+      return function() {
+        expect(obj).to.have.property(prop);
+      };
+    };
 
 
-    it('Utilities object\'s accepts property is a function', function() {
-      expect(Utilities.accepts).to.be.a('function');
-    });
+    var makeFunctionTest = function(obj, prop) {
+      return function() {
+        expect(obj[prop]).to.be.a('function');
+      };
+    };
 
 
-    it('Utilities object has \'hasCompleteParse\' property', function() {
-      expect(Utilities).to.have.property('hasCompleteParse');
-    });
+    var funcs = ['accepts', 'hasCompleteParse', 'getFinalValue', 'equalsArray',
+                 'containsResult', 'logFinalValue', 'printParses', 'logAccepts', 'getResults'];
 
-
-    it('Utilities object\'s hasCompleteParse property is a function', function() {
-      expect(Utilities.hasCompleteParse).to.be.a('function');
-    });
-
-
-    it('Utilities object has \'getFinalValue\' property', function() {
-      expect(Utilities).to.have.property('getFinalValue');
-    });
-
-
-    it('Utilities object\'s getFinalValue property is a function', function() {
-      expect(Utilities.getFinalValue).to.be.a('function');
-    });
-
-
-    it('Utilities object has \'equalsArray\' property', function() {
-      expect(Utilities).to.have.property('equalsArray');
-    });
-
-
-    it('Utilities object\'s equalsArray property is a function', function() {
-      expect(Utilities.equalsArray).to.be.a('function');
-    });
-
-
-    it('Utilities object has \'containsResult\' property', function() {
-      expect(Utilities).to.have.property('containsResult');
-    });
-
-
-    it('Utilities object\'s containsResult property is a function', function() {
-      expect(Utilities.containsResult).to.be.a('function');
-    });
-
-
-    it('Utilities object has \'logFinalValue\' property', function() {
-      expect(Utilities).to.have.property('logFinalValue');
-    });
-
-
-    it('Utilities object\'s logFinalValue property is a function', function() {
-      expect(Utilities.logFinalValue).to.be.a('function');
-    });
-
-
-    it('Utilities object has \'printParses\' property', function() {
-      expect(Utilities).to.have.property('printParses');
-    });
-
-
-    it('Utilities object\'s printParses property is a function', function() {
-      expect(Utilities.printParses).to.be.a('function');
-    });
-
-
-    it('Utilities object has \'logAccepts\' property', function() {
-      expect(Utilities).to.have.property('logAccepts');
-    });
-
-
-    it('Utilities object\'s logAccepts property is a function', function() {
-      expect(Utilities.logAccepts).to.be.a('function');
-    });
-
-
-    it('Utilities object has \'getResults\' property', function() {
-      expect(Utilities).to.have.property('getResults');
-    });
-
-
-    it('Utilities object\'s getResults property is a function', function() {
-      expect(Utilities.getResults).to.be.a('function');
+    funcs.forEach(function(f) {
+      it('Utilities object has \'' + f + '\' property', makePropertyTest(Utilities, f));
+      it('Utilities object\'s ' + f + ' property is a function', makeFunctionTest(Utilities, f));
     });
   });
 

@@ -8,7 +8,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   var getResults = Utilities.getResults;
 
 
-  // Generator functions for various tests
+  // Generator functions for the property existence tests
   var makePropertyTest = function(obj, prop) {
     return function() {
       expect(obj).to.have.property(prop);
@@ -34,108 +34,117 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   });
 
 
+  // Generator functions for the combinator tests
+  var makeParserIsAFunctionTest = function(parserMaker) {
+    return function() {
+      var parser = parserMaker();
+      expect(parser).to.be.a('function');
+    };
+  };
+
+
+  var makeParserHasCorrectLengthTest = function(parserMaker) {
+    return function() {
+      var parser = parserMaker();
+      expect(parser.length).to.equal(1);
+    };
+  };
+
+
+  var makeBasicParserTests = function(name, parserMaker) {
+    it(name + ' returns a function', makeParserIsAFunctionTest(parserMaker));
+    it(name + ' returns a function of length 1', makeParserHasCorrectLengthTest(parserMaker));
+  };
+
+
   // Bogus parser for the generator tests
-  var alwaysSlice = function(input) {
+  var fakeParser = function(input) {
     return [ParseResult(input.slice(1), input[0])];
   };
 
 
-  // Generator function for a number of combinator tests
-  var makeDecoratorPropertyTests = function(name, parserMaker) {
+  var makeDecoratorExistenceTest = function(parserMaker, prop) {
+    return function() {
+      var parser = parserMaker();
+      makePropertyTest(parser, prop)();
+    };
+  };
+
+
+  var makeDecoratorFunctionTest = function(parserMaker, prop) {
+    return function() {
+      var parser = parserMaker();
+      makeFunctionTest(parser, prop)();
+    };
+  };
+
+
+  // Generate tests for the properties installed by the Parser decorator,
+  // checking that all the expected properties are installed, that they too
+  // return Parser-wrapped functions, and that they work as expected
+  var makeDecoratorPropertyTests = function(name, parserMaker, recurring) {
     var props = ['or', 'orElse', 'then'];
     props.forEach(function(p) {
-      it(name + ' parser has \'' + p + '\' property', function() {
-        var parser = parserMaker();
-        makePropertyTest(parser, p)();
-      });
+      it(name + ' parser has \'' + p + '\' property', makeDecoratorExistenceTest(parserMaker, p));
+      it(name + ' parser\'s \'' + p + '\' property is a function', makeDecoratorFunctionTest(parserMaker, p));
 
+      // Make a new parser maker out of old, and perhaps recur
+      if (recurring)
+        return;
 
-      it(name + ' parser\'s \'' + p + '\' property is a function', function() {
-        var parser = parserMaker();
-        makeFunctionTest(parser, p)();
-      });
+      var newParserMaker = function() {
+        var original = parserMaker();
+        return original[p](fakeParser);
+      };
+      var newName = name + ' parser\'s \'' + p + '\'';
 
-
-      it(name + '\'s \'' + p + '\' function returns a parser', function() {
-        var parser = parserMaker();
-        var newParser = parser[p](alwaysSlice);
-        expect(newParser).to.be.a('function');
-        expect(newParser.length).to.equal(1);
-      });
+      makeStandardParserTests(newName, newParserMaker, true);
     });
   };
 
 
   var makeDecoratorTests = function(name, parserMaker) {
-    makeDecoratorPropertyTests(name, parserMaker);
-
-    var orMaker = function() {
-      var parser = parserMaker();
-      var or = parser.or(alwaysSlice);
-      return or;
-    };
-    makeDecoratorPropertyTests(name + '\'s ' + ' \'or\'', orMaker);
-
+    // Just have to guess at appropriate input
+    var input = 'abcdef';
 
     it(name + '\'s \'or\' parser works as expected', function() {
-      // Just have to guess at suitable input
-      var input = 'abcdef';
       var parser = parserMaker();
-      var orResults = getResults(parser.or(alwaysSlice), input);
-      var altResults = getResults(ParserCombinators.alt(parser, alwaysSlice), input);
+      var orResults = getResults(parser.or(fakeParser), input);
+      var altResults = getResults(ParserCombinators.alt(parser, fakeParser), input);
       expect(orResults).to.deep.equal(altResults);
     });
 
-
-    var orElseMaker = function() {
-      var parser = parserMaker();
-      var orElse = parser.orElse(alwaysSlice);
-      return orElse;
-    };
-    makeDecoratorPropertyTests(name + '\'s ' + ' \'orElse\'', orElseMaker);
-
-
     it(name + '\'s \'orElse\' parser works as expected', function() {
-      // Just have to guess at suitable input
-      var input = 'abcdef';
       var parser = parserMaker();
-      var orElseResults = getResults(parser.orElse(alwaysSlice), input);
-      var strictAltResults = getResults(ParserCombinators.strictAlt(parser, alwaysSlice), input);
+      var orElseResults = getResults(parser.orElse(fakeParser), input);
+      var strictAltResults = getResults(ParserCombinators.strictAlt(parser, fakeParser), input);
       expect(orElseResults).to.deep.equal(strictAltResults);
     });
 
-
-    var thenMaker = function() {
-      var parser = parserMaker();
-      var then = parser.then(alwaysSlice);
-      return then;
-    };
-    makeDecoratorPropertyTests(name + '\'s ' + ' \'then\'', thenMaker);
-
-
     it(name + '\'s \'then\' parser works as expected', function() {
-      // Just have to guess at suitable input
-      var input = 'abcdef';
       var parser = parserMaker();
-      var thenResults = getResults(parser.then(alwaysSlice), input);
-      var seqResults = getResults(ParserCombinators.seq(parser, alwaysSlice), input);
+      var thenResults = getResults(parser.then(fakeParser), input);
+      var seqResults = getResults(ParserCombinators.seq(parser, fakeParser), input);
       expect(thenResults).to.deep.equal(seqResults);
     });
   };
 
 
+  // One more test generator
+  var makeStandardParserTests = function(name, parserMaker, recurring) {
+    // 'Recurring' prevents infinite recursion on testing the decorator properties
+    var recurring = recurring || false;
+    makeBasicParserTests(name, parserMaker);
+    makeDecoratorPropertyTests(name, parserMaker, recurring);
+    if (!recurring)
+      makeDecoratorTests(name, parserMaker);
+  };
+
+
   describe('Symbol combinator', function() {
     var symbol = ParserCombinators.symbol;
-
-
-    it('Symbol returns a function', function() {
-      expect(symbol()).to.be.a('function');
-    });
-
-
-    it('Returned function has length 1', function() {
-      expect(symbol().length).to.equal(1);
-    });
+    var makeSymbol = function() {return symbol('a');};
+    makeStandardParserTests('symbol', makeSymbol);
 
 
     it('Returned parser fails if input doesn\'t match', function() {
@@ -204,14 +213,16 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(aParser, 'ab');
       expect(parseResult.length).to.equal(1);
     });
-
-
-    makeDecoratorTests('symbol', function() {return symbol('a');});
   });
 
 
   describe('Token combinator', function() {
     var token = ParserCombinators.token;
+    var makeToken = function() {
+      var fakeToken = {equals: function(a) {return a === 'a';}};
+      return token(fakeToken);
+    };
+    makeStandardParserTests('token', makeToken);
 
 
     // A basic Token constructor for the following tests
@@ -225,16 +236,6 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     TokenMaker.prototype.equals = function(other) {
       return typeof(other) === 'object' && this.value === other.value;
     };
-
-
-    it('Token returns a function', function() {
-      expect(token()).to.be.a('function');
-    });
-
-
-    it('Returned function has length 1', function() {
-      expect(token().length).to.equal(1);
-    });
 
 
     it('Returned parser fails if input doesn\'t match', function() {
@@ -309,29 +310,21 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, [expectedToken, nextToken]);
       expect(parseResult.length).to.equal(1);
     });
-
-
-    makeDecoratorTests('token', function() {return token({equals: function(a) {return a === 'a';}});});
   });
 
 
   describe('Satisfy combinator', function() {
     var satisfy = ParserCombinators.satisfy;
+    var makeSatisfy = function() {
+      var fakePredicate = function(s) {return s === 'a';};
+      return satisfy(fakePredicate);
+    };
+    makeStandardParserTests('satisfy', makeSatisfy);
 
 
     // Predicates for use in the following tests
     var always = function(input) {return true;}
     var never = function(input) {return false;}
-
-
-    it('Satisfy returns a function', function() {
-      expect(satisfy()).to.be.a('function');
-    });
-
-
-    it('Returned function has length 1', function() {
-      expect(satisfy().length).to.equal(1);
-    });
 
 
     it('Returned parser calls predicate function', function() {
@@ -449,24 +442,13 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, expected.concat(remainder));
       expect(parseResult.length).to.equal(1);
     });
-
- 
-    makeDecoratorTests('satisfy', function() {return satisfy(function(s) {return s === 'a';})});
   });
 
 
   describe('Succeed combinator', function() {
     var succeed = ParserCombinators.succeed;
-
-
-    it('Succeed returns a function', function() {
-      expect(succeed()).to.be.a('function');
-    });
-
-
-    it('Returned function has length 1', function() {
-      expect(succeed().length).to.equal(1);
-    });
+    var makeSucceed = function() {return succeed(1);};
+    makeStandardParserTests('succeed', makeSucceed);
 
 
     it('Returned parser succeeds with supplied value (1)', function() {
@@ -512,24 +494,13 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, input);
       expect(parseResult.length).to.equal(1);
     });
-
-
-    makeDecoratorTests('succeed', function() {return succeed(1);});
   });
 
 
   describe('Epsilon', function() {
     var epsilon = ParserCombinators.epsilon;
-
-
-    it('Epsilon is a function', function() {
-      expect(epsilon).to.be.a('function');
-    });
-
-
-    it('Epsilon has length 1', function() {
-      expect(epsilon.length).to.equal(1);
-    });
+    var makeEpsilon = function() {return epsilon;};
+    makeStandardParserTests('epsilon', makeEpsilon);
 
 
     it('Epsilon succeeds with null', function() {
@@ -565,24 +536,13 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(epsilon, input);
       expect(parseResult.length).to.equal(1);
     });
-
-
-    makeDecoratorTests('epsilon', function() {return epsilon;});
   });
 
 
   describe('Fail', function() {
     var fail = ParserCombinators.fail;
-
-
-    it('Fail is a function', function() {
-      expect(fail).to.be.a('function');
-    });
-
-
-    it('Fail has length 1', function() {
-      expect(fail.length).to.equal(1);
-    });
+    var makeFail = function() {return fail;};
+    makeStandardParserTests('fail', makeFail);
 
 
     it('Fail fails with input (1)', function() {
@@ -604,30 +564,13 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(fail, input);
       expect(parseResult).to.deep.equal([]);
     });
-
-
-    makeDecoratorTests('fail', function() {return fail;});
   });
 
 
   describe('Alt combinator', function() {
     var alt =  ParserCombinators.alt;
-
-
-    it('Alt returns a function', function() {
-      var p1 = function(input) {};
-      var p2 = function(input) {};
-      var parser = alt(p1, p2);
-      expect(parser).to.be.a('function');
-    });
-
-
-    it('Parser returned by alt has length 1', function() {
-      var p1 = function(input) {};
-      var p2 = function(input) {};
-      var parser = alt(p1, p2);
-      expect(parser.length).to.equal(1);
-    });
+    var makeAlt = function() {return alt(fakeParser, fakeParser);};
+    makeStandardParserTests('alt', makeAlt);
 
 
     it('Parser returned by alt fails if both alternatives fail', function() {
@@ -674,30 +617,14 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, input);
       expect(parseResult).to.deep.equal(p1(input).concat(p2(input)));
     });
-
-
-    makeDecoratorTests('alt', function() {return alt(alwaysSlice, alwaysSlice);});
   });
 
 
   describe('StrictAlt combinator', function() {
     var strictAlt =  ParserCombinators.strictAlt;
-
-
-    it('StrictAlt returns a function', function() {
-      var p1 = function(input) {};
-      var p2 = function(input) {};
-      var parser = strictAlt(p1, p2);
-      expect(parser).to.be.a('function');
-    });
-
-
-    it('Parser returned by strictAlt has length 1', function() {
-      var p1 = function(input) {};
-      var p2 = function(input) {};
-      var parser = strictAlt(p1, p2);
-      expect(parser.length).to.equal(1);
-    });
+    var empty = function(input) {};
+    var makeStrictAlt = function() {return strictAlt(fakeParser, fakeParser);};
+    makeStandardParserTests('strictAlt', makeStrictAlt);
 
 
     it('Parser returned by strictAlt fails if both alternatives fail', function() {
@@ -744,30 +671,14 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, input);
       expect(parseResult).to.deep.equal(p1(input));
     });
-
-
-    makeDecoratorTests('strictAlt', function() {return strictAlt(alwaysSlice, alwaysSlice);});
   });
 
 
   describe('Seq combinator', function() {
     var seq =  ParserCombinators.seq;
-
-
-    it('Seq returns a function', function() {
-      var p1 = function(input) {};
-      var p2 = function(input) {};
-      var parser = seq(p1, p2);
-      expect(parser).to.be.a('function');
-    });
-
-
-    it('Parser returned by seq has length 1', function() {
-      var p1 = function(input) {};
-      var p2 = function(input) {};
-      var parser = seq(p1, p2);
-      expect(parser.length).to.equal(1);
-    });
+    var empty = function(input) {};
+    var makeSeq = function() {return seq(fakeParser, fakeParser);};
+    makeStandardParserTests('seq', makeSeq);
 
 
     it('Parser returned by seq fails if both alternatives fail', function() {
@@ -867,30 +778,14 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parser = seq(p1, p2);
       expect(getResults(parser, 'abc').length).to.equal(resultCount);
     });
-
-
-    makeDecoratorTests('seq', function() {return seq(alwaysSlice, alwaysSlice);});
   });
 
 
   describe('Apply combinator', function() {
     var apply =  ParserCombinators.apply;
-
-
-    it('Apply returns a function', function() {
-      var p1 = function(input) {};
-      var f = function(input) {};
-      var parser = apply(f, p1);
-      expect(parser).to.be.a('function');
-    });
-
-
-    it('Parser returned by apply has length 1', function() {
-      var p1 = function(input) {};
-      var f = function(input) {};
-      var parser = apply(f, p1);
-      expect(parser.length).to.equal(1);
-    });
+    var id = function(i) {return i;};
+    var makeApply = function() {return apply(id, fakeParser);};
+    makeStandardParserTests('apply', makeApply);
 
 
     it('Parser returned by apply fails if wrapped parser fails', function() {
@@ -914,8 +809,5 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, 'a');
       expect(parseResult).to.deep.equal(expectedResults);
     });
-
-
-    makeDecoratorTests('apply', function() {return apply(function(a) {return a;}, alwaysSlice);});
   });
 });

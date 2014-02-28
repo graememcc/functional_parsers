@@ -25,7 +25,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
   describe('ParserCombinators exports', function() {
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
-                 'alt', 'strictAlt', 'seq'];
+                 'alt', 'strictAlt', 'seq', 'apply'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -870,5 +870,52 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
 
     makeDecoratorTests('seq', function() {return seq(alwaysSlice, alwaysSlice);});
+  });
+
+
+  describe('Apply combinator', function() {
+    var apply =  ParserCombinators.apply;
+
+
+    it('Apply returns a function', function() {
+      var p1 = function(input) {};
+      var f = function(input) {};
+      var parser = apply(f, p1);
+      expect(parser).to.be.a('function');
+    });
+
+
+    it('Parser returned by apply has length 1', function() {
+      var p1 = function(input) {};
+      var f = function(input) {};
+      var parser = apply(f, p1);
+      expect(parser.length).to.equal(1);
+    });
+
+
+    it('Parser returned by apply fails if wrapped parser fails', function() {
+      var p1 = ParserCombinators.fail;
+      var f = function(input) {return 1;};
+      var parser = apply(f, p1);
+      var result = getResults(parser, 'abc');
+      expect(result).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by apply correctly transforms results', function() {
+      var originalResult = [ParseResult('a', 'a'), ParseResult('b', 'ab'), ParseResult('b', 'abc')];
+      var p1 = function(input) {return originalResult;};
+      var f = function(input) {return input.length;};
+      var expectedResults = originalResult.map(function(p) {
+        return ParseResult(p.remaining, p.value.length);
+      });
+
+      var parser = apply(f, p1);
+      var parseResult = getResults(parser, 'a');
+      expect(parseResult).to.deep.equal(expectedResults);
+    });
+
+
+    makeDecoratorTests('apply', function() {return apply(function(a) {return a;}, alwaysSlice);});
   });
 });

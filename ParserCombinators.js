@@ -100,8 +100,20 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var apply = function(f, parser) {
+    return Parser(function(input) {
+      var originalResults = parser(input);
+
+      return originalResults.map(function(r) {
+        return ParseResult(r.remaining, f(r.value));
+      });
+    });
+  };
+
+
   return {
     alt: alt,
+    apply: apply,
     epsilon: epsilon,
     fail: fail,
     satisfy: satisfy,

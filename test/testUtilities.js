@@ -85,6 +85,55 @@ requirejs(['ParseResult.js', 'Utilities.js', 'chai'], function(ParseResult, Util
     it('Utilities object\'s logAccepts property is a function', function() {
       expect(Utilities.logAccepts).to.be.a('function');
     });
+
+
+    it('Utilities object has \'getResults\' property', function() {
+      expect(Utilities).to.have.property('getResults');
+    });
+
+
+    it('Utilities object\'s getResults property is a function', function() {
+      expect(Utilities.getResults).to.be.a('function');
+    });
+  });
+
+
+  describe('getResults', function() {
+    var getResults = Utilities.getResults;
+
+    it('getResults takes two parameters', function() {
+      expect(getResults.length).to.equal(2);
+    });
+
+
+    it('getResults calls the parser with the given input', function() {
+      var fakeParser = function(s) {
+        fakeParser.param = s;
+        fakeParser.called = true;
+        return [];
+      };
+      fakeParser.called = false;
+
+      var input = 'mozilla';
+      getResults(fakeParser, input);
+      expect(fakeParser.called).to.equal(true);
+      expect(fakeParser.param).to.equal(input);
+    });
+
+
+    it('getResults returns parser result', function() {
+      var results = [1, 2, 3];
+      var fakeParser = function(s) {
+        return results;
+      };
+
+      var input = 'mozilla';
+      var parseResult = getResults(fakeParser, input);
+      expect(parseResult).to.deep.equal(results);
+      results = ['a', 'b', 'c'];
+      var parseResult = getResults(fakeParser, input);
+      expect(parseResult).to.deep.equal(results);
+    });
   });
 
 

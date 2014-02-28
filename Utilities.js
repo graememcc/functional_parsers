@@ -2,8 +2,13 @@ define([], function() {
   "use strict";
 
 
+  var getResults = function(parser, input) {
+    return parser(input);
+  };
+
+
   var accepts = function(parser, input) {
-    return hasCompleteParse(parser(input));
+    return hasCompleteParse(getResults(parser, input));
   };
 
 
@@ -108,6 +113,7 @@ define([], function() {
     containsResult: containsResult,
     equalsArray: equalsArray,
     getFinalValue: getFinalValue,
+    getResults: getResults,
     hasCompleteParse: hasCompleteParse,
     logAccepts: logAccepts,
     logFinalValue: logFinalValue,

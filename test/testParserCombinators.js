@@ -25,7 +25,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
   describe('ParserCombinators exports', function() {
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
-                 'alt', 'strictAlt', 'seq', 'apply', 'concatSeq'];
+                 'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -910,6 +910,99 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var input = 'abc';
       var parseResult = getResults(parser, input);
       expect(parseResult).to.deep.equal([ParseResult('', ['g', 'h'])]);
+    });
+  });
+
+
+  describe('Sequence combinator', function() {
+    var sequence =  ParserCombinators.sequence;
+    var makeSequence = function() {return sequence(fakeParser, fakeParser);};
+    makeStandardParserTests('sequence', makeSequence);
+
+
+    it('Sequence parser is isomorphic to wrapped parser if called with only 1 parser (1)', function() {
+      var p = ParserCombinators.succeed('a');
+      var parser = sequence(p);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(getResults(p, input));
+    });
+
+
+    it('Sequence parser is isomorphic to wrapped parser if called with only 1 parser (2)', function() {
+      var p = ParserCombinators.succeed(42);
+      var parser = sequence(p);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(getResults(p, input));
+    });
+
+
+    it('Sequence parser is isomorphic to concatSeq if called with only 2 parsers (1)', function() {
+      var p = ParserCombinators.succeed('a');
+      var parser = sequence(p, fakeParser);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(getResults(ParserCombinators.concatSeq(p, fakeParser), input));
+    });
+
+
+    it('Sequence parser is isomorphic to concatSeq if called with only 2 parsers (2)', function() {
+      var p1 = ParserCombinators.succeed(['a']);
+      var p2 = ParserCombinators.succeed(['b']);
+      var parser = sequence(p1, p2);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(getResults(ParserCombinators.concatSeq(p1, p2), input));
+    });
+
+
+    it('Sequence parser fails if first parser fails', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.succeed('b');
+      var parser = sequence(ParserCombinators.fail, p1, p2, fakeParser);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Sequence parser fails if mid parser fails', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.succeed('b');
+      var parser = sequence(p1, ParserCombinators.fail, p2, fakeParser);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Sequence parser fails if last parser fails', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.succeed('b');
+      var parser = sequence(p2, fakeParser, p1, ParserCombinators.fail);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Sequence parser works correctly (1)', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.succeed('b');
+      var p3 = ParserCombinators.succeed('c');
+      var parser = sequence(p1, p2, p3);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult('abc', ['a', 'b', 'c'])]);
     });
   });
 });

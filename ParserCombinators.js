@@ -129,6 +129,14 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var sequence = function() {
+    var args = [].slice.call(arguments);
+    return args.reduce(function(soFar, current) {
+      return concatSeq(soFar, current);
+    });
+  };
+
+
   return {
     alt: alt,
     apply: apply,
@@ -137,6 +145,7 @@ define(['ParseResult.js'], function(ParseResult) {
     fail: fail,
     satisfy: satisfy,
     seq: seq,
+    sequence: sequence,
     strictAlt: strictAlt,
     succeed: succeed,
     symbol: symbol,

@@ -14,6 +14,10 @@ define(['ParseResult.js'], function(ParseResult) {
       return seq(this, p2);
     };
 
+    f.thenConcat = function(p2) {
+      return concatSeq(this, p2);
+    };
+
     return f;
   };
 

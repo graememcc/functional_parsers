@@ -83,7 +83,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   // checking that all the expected properties are installed, that they too
   // return Parser-wrapped functions, and that they work as expected
   var makeDecoratorPropertyTests = function(name, parserMaker, recurring) {
-    var props = ['or', 'orElse', 'then'];
+    var props = ['or', 'orElse', 'then', 'thenConcat'];
     props.forEach(function(p) {
       it(name + ' parser has \'' + p + '\' property', makeDecoratorExistenceTest(parserMaker, p));
       it(name + ' parser\'s \'' + p + '\' property is a function', makeDecoratorFunctionTest(parserMaker, p));
@@ -114,6 +114,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       expect(orResults).to.deep.equal(altResults);
     });
 
+
     it(name + '\'s \'orElse\' parser works as expected', function() {
       var parser = parserMaker();
       var orElseResults = getResults(parser.orElse(fakeParser), input);
@@ -121,11 +122,20 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       expect(orElseResults).to.deep.equal(strictAltResults);
     });
 
+
     it(name + '\'s \'then\' parser works as expected', function() {
       var parser = parserMaker();
       var thenResults = getResults(parser.then(fakeParser), input);
       var seqResults = getResults(ParserCombinators.seq(parser, fakeParser), input);
       expect(thenResults).to.deep.equal(seqResults);
+    });
+
+
+    it(name + '\'s \'thenConcat\' parser works as expected', function() {
+      var parser = parserMaker();
+      var thenConcatResults = getResults(parser.thenConcat(fakeParser), input);
+      var concatSeqResults = getResults(ParserCombinators.concatSeq(parser, fakeParser), input);
+      expect(thenConcatResults).to.deep.equal(concatSeqResults);
     });
   };
 

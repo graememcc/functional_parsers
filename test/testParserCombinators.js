@@ -25,7 +25,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
   describe('ParserCombinators exports', function() {
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
-                 'alt', 'strictAlt', 'seq', 'apply'];
+                 'alt', 'strictAlt', 'seq', 'apply', 'concatSeq'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -808,6 +808,98 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parser = apply(f, p1);
       var parseResult = getResults(parser, 'a');
       expect(parseResult).to.deep.equal(expectedResults);
+    });
+  });
+
+
+  describe('concatSeq combinator', function() {
+    var concatSeq = ParserCombinators.concatSeq;
+    var makeConcatSeq = function() {return concatSeq(fakeParser, fakeParser);};
+    makeStandardParserTests('concatSeq', makeConcatSeq);
+
+
+    it('Parser returned by concatSeq fails if first parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = ParserCombinators.fail;
+      var p2 = function(input) {return result;};
+
+      var parser = concatSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by concatSeq fails if second parser fails', function() {
+      var result = [ParseResult('a', 'b')];
+      var p1 = function(input) {return result;};
+      var p2 = ParserCombinators.fail;
+
+      var parser = concatSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by concatSeq fails if both parsers fail', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.fail;
+
+      var parser = concatSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('ConcatSeq isomorphic to seq if parse results do not have array values', function() {
+      var result = [ParseResult('a', 'b')];
+      var p = function(input) {return result;};
+      var parser = concatSeq(p, p);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(getResults(ParserCombinators.seq(p, p), input));
+    });
+
+
+    it('ConcatSeq concats if first ParseResult\'s value is an array', function() {
+      var firstResult = [ParseResult('a', ['b'])];
+      var secondResult = [ParseResult('', 'c')];
+      var p1 = function(input) {return firstResult;};
+      var p2 = function(input) {return secondResult;};
+      var parser = concatSeq(p1, p2);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult('', ['b', 'c'])]);
+    });
+
+
+    it('ConcatSeq concats if second ParseResult\'s value is an array', function() {
+      var firstResult = [ParseResult('a', 'e')];
+      var secondResult = [ParseResult('', ['f'])];
+      var p1 = function(input) {return firstResult;};
+      var p2 = function(input) {return secondResult;};
+      var parser = concatSeq(p1, p2);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult('', ['e', 'f'])]);
+    });
+
+
+    it('ConcatSeq concats if both ParseResult\'s values are arrays', function() {
+      var firstResult = [ParseResult('a', ['g'])];
+      var secondResult = [ParseResult('', ['h'])];
+      var p1 = function(input) {return firstResult;};
+      var p2 = function(input) {return secondResult;};
+      var parser = concatSeq(p1, p2);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult('', ['g', 'h'])]);
     });
   });
 });

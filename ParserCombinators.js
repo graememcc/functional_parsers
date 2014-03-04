@@ -111,9 +111,24 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var concatSeq = function(p1, p2) {
+    var concat = function(v) {
+      if (!Array.isArray(v))
+        return v;
+
+      var v0 = Array.isArray(v[0]) ? v[0] : [v[0]];
+      var v1 = Array.isArray(v[1]) ? v[1] : [v[1]];
+      return v0.concat(v1);
+    };
+
+    return apply(concat, seq(p1, p2));
+  };
+
+
   return {
     alt: alt,
     apply: apply,
+    concatSeq: concatSeq,
     epsilon: epsilon,
     fail: fail,
     satisfy: satisfy,

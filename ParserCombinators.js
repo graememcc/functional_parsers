@@ -18,6 +18,10 @@ define(['ParseResult.js'], function(ParseResult) {
       return concatSeq(this, p2);
     };
 
+    f.thenAppend = function(p2) {
+      return plus(this, p2);
+    };
+
     return f;
   };
 

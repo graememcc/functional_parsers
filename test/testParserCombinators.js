@@ -84,7 +84,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   // checking that all the expected properties are installed, that they too
   // return Parser-wrapped functions, and that they work as expected
   var makeDecoratorPropertyTests = function(name, parserMaker, recurring) {
-    var props = ['or', 'orElse', 'then', 'thenConcat'];
+    var props = ['or', 'orElse', 'then', 'thenConcat', 'thenAppend'];
     props.forEach(function(p) {
       it(name + ' parser has \'' + p + '\' property', makeDecoratorExistenceTest(parserMaker, p));
       it(name + ' parser\'s \'' + p + '\' property is a function', makeDecoratorFunctionTest(parserMaker, p));
@@ -137,6 +137,14 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var thenConcatResults = getResults(parser.thenConcat(fakeParser), input);
       var concatSeqResults = getResults(ParserCombinators.concatSeq(parser, fakeParser), input);
       expect(thenConcatResults).to.deep.equal(concatSeqResults);
+    });
+
+
+    it(name + '\'s \'thenAppend\' parser works as expected', function() {
+      var parser = parserMaker();
+      var thenAppendResults = getResults(parser.thenAppend(fakeParser), input);
+      var plusResults = getResults(ParserCombinators.plus(parser, fakeParser), input);
+      expect(thenAppendResults).to.deep.equal(plusResults);
     });
   };
 

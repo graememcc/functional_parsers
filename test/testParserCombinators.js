@@ -25,7 +25,8 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
   describe('ParserCombinators exports', function() {
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
-                 'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence'];
+                 'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence',
+                 'plus'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -1003,6 +1004,114 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var input = 'abc';
       var parseResult = getResults(parser, input);
       expect(parseResult).to.deep.equal([ParseResult('abc', ['a', 'b', 'c'])]);
+    });
+  });
+
+
+  describe('Plus combinator', function() {
+    var plus =  ParserCombinators.plus;
+    var makePlus = function() {return plus(fakeParser, fakeParser);};
+    makeStandardParserTests('seqeunce', makePlus);
+
+
+    it('Plus parser is isomorphic to wrapped parser if called with only one parser (1)', function() {
+      var p = ParserCombinators.succeed('a');
+      var parser = plus(p);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(getResults(p, input));
+    });
+
+
+    it('Plus parser is isomorphic to wrapped parser if called with only one parser (2)', function() {
+      var p = ParserCombinators.succeed(42);
+      var parser = plus(p);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal(getResults(p, input));
+    });
+
+
+    it('Plus parser fails if first parser fails', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.succeed('b');
+      var p3 = ParserCombinators.succeed('c');
+      var parser = plus(p1, p2, p3);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Plus parser fails if mid parser fails', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.succeed('b');
+      var p3 = ParserCombinators.fail;
+      var p4 = ParserCombinators.succeed('d');
+      var parser = plus(p1, p2, p3, p4);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Plus parser fails if second parser fails', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.succeed('b');
+      var p3 = ParserCombinators.fail;
+      var parser = plus(p1, p2, p3);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Plus parser fails if both parsers fail', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.fail;
+      var parser = plus(p1, p2);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Plus parser concatenates results correctly', function() {
+      var p = ParserCombinators.succeed('a');
+      var parser = plus(p, p);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult('abc', 'aa')]);
+    });
+
+
+    it('Plus parser concatenates in correct order', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.succeed('b');
+      var p3 = ParserCombinators.succeed('d');
+      var parser = plus(p1, p2, p3);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult('abc', 'abd')]);
+    });
+
+
+    it('Plus parser does not act only on strings', function() {
+      var p1 = ParserCombinators.succeed(2);
+      var p2 = ParserCombinators.succeed(3);
+      var parser = plus(p1, p2);
+
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult('abc', 5)]);
     });
   });
 });

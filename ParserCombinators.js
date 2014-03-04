@@ -137,12 +137,23 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var plus = function() {
+    var args = [].slice.call(arguments);
+    var add = function(val) {return val[0] + val[1];};
+
+    return args.reduce(function(soFar, current) {
+      return apply(add, seq(soFar, current));
+    });
+  };
+
+
   return {
     alt: alt,
     apply: apply,
     concatSeq: concatSeq,
     epsilon: epsilon,
     fail: fail,
+    plus: plus,
     satisfy: satisfy,
     seq: seq,
     sequence: sequence,

@@ -151,6 +151,14 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var takeFirstValueOfSeq = function(p1, p2) {
+    var first = function(value) {
+      return value[0];
+    };
+    return apply(first, seq(p1, p2));
+  };
+
+
   return {
     alt: alt,
     apply: apply,
@@ -164,6 +172,7 @@ define(['ParseResult.js'], function(ParseResult) {
     strictAlt: strictAlt,
     succeed: succeed,
     symbol: symbol,
+    takeFirstValueOfSeq: takeFirstValueOfSeq,
     token: token
   };
 });

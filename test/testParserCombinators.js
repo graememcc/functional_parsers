@@ -26,7 +26,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   describe('ParserCombinators exports', function() {
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
                  'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence',
-                 'plus', 'takeFirstValueOfSeq'];
+                 'plus', 'takeFirstValueOfSeq', 'takeSecondValueOfSeq'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -1191,6 +1191,80 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
 
       var input = 'abc';
       var parser = takeFirstValueOfSeq(p1, p2);
+      var expectedRemaining = getResults(p1.then(p2), input)[0].remaining;
+      var parseResult = getResults(parser, input);
+      expect(parseResult[0].remaining).to.equal(expectedRemaining);
+    });
+  });
+
+
+  describe('takeSecondValueOfSeq Combinator', function() {
+    var takeSecondValueOfSeq =  ParserCombinators.takeSecondValueOfSeq;
+    var makeSecondOf = function() {return takeSecondValueOfSeq(fakeParser, fakeParser);};
+    makeStandardParserTests('takeSecondValueOfSeq', makeSecondOf);
+
+
+    it('Parser returned by takeSecondValueOfSeq fails if first parser fails', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.succeed('a');
+
+      var parser = takeSecondValueOfSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by takeSecondValueOfSeq fails if second parser fails', function() {
+      var p1 = ParserCombinators.succeed('a');
+      var p2 = ParserCombinators.fail;
+
+      var parser = takeSecondValueOfSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by takeSecondValueOfSeq fails if both alternatives fail', function() {
+      var p1 = ParserCombinators.fail;
+      var p2 = ParserCombinators.fail;
+
+      var parser = takeSecondValueOfSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('Parser returned by takeSecondValueOfSeq works correctly (1)', function() {
+      var p1 = ParserCombinators.succeed('e');
+      var p2 = ParserCombinators.succeed('f');
+
+      var parser = takeSecondValueOfSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, 'f')]);
+    });
+
+
+    it('Parser returned by takeSecondValueOfSeq works correctly (2)', function() {
+      var p1 = ParserCombinators.succeed('g');
+      var p2 = ParserCombinators.succeed('h');
+
+      var parser = takeSecondValueOfSeq(p1, p2);
+      var input = 'abc';
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, 'h')]);
+    });
+
+
+    it('Parser returned by takeSecondValueOfSeq returns correct value for remaining', function() {
+      var p1 = ParserCombinators.symbol('a');
+      var p2 = ParserCombinators.symbol('b');
+
+      var input = 'abc';
+      var parser = takeSecondValueOfSeq(p1, p2);
       var expectedRemaining = getResults(p1.then(p2), input)[0].remaining;
       var parseResult = getResults(parser, input);
       expect(parseResult[0].remaining).to.equal(expectedRemaining);

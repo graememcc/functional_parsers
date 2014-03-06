@@ -26,6 +26,10 @@ define(['ParseResult.js'], function(ParseResult) {
       return takeFirstValueOfSeq(this, p2);
     };
 
+    f.thenReturn = function(p2) {
+      return takeSecondValueOfSeq(this, p2);
+    };
+
     return f;
   };
 

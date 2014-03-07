@@ -26,7 +26,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   describe('ParserCombinators exports', function() {
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
                  'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence',
-                 'plus', 'takeFirstValueOfSeq', 'takeSecondValueOfSeq'];
+                 'plus', 'takeFirstValueOfSeq', 'takeSecondValueOfSeq', 'zeroOrMoreOf'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -1285,5 +1285,96 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       var parseResult = getResults(parser, input);
       expect(parseResult[0].remaining).to.equal(expectedRemaining);
     });
+  });
+
+
+  // The next three functions are helpers for the Kleene tests
+  var duplicate = function(text, times, leaveAsArray) {
+    leaveAsArray = leaveAsArray || false;
+    var s = [];
+
+    for (var i = 0; i < times; i++)
+      s.push(text);
+    if (typeof(text) === 'string' && !leaveAsArray)
+      s = s.join('')
+    return s;
+  };
+
+
+  var checkLength = function(parser, text, times, isOneOrMore) {
+    return function() {
+      isOneOrMore = isOneOrMore || false;
+      var input = duplicate(text, times);
+      var parseResult = getResults(parser, input);
+      var expectedLength = isOneOrMore ? times : times + 1;
+      expect(parseResult.length).to.equal(expectedLength);
+    };
+  };
+
+
+  var checkOccurences = function(parser, text, times, isOneOrMore) {
+    return function() {
+      isOneOrMore = isOneOrMore || false;
+      var input = duplicate(text, times);
+      var parseResult = getResults(parser, input);
+      var start = isOneOrMore ? 1 : 0;
+
+      for (var i = start; i <= times; i++) {
+        var expectedRemaining = duplicate(text, times - i, Array.isArray(text));
+        var expectedConsumed = duplicate(text, i, true);
+        expect(Utilities.containsResult(ParseResult(expectedRemaining, expectedConsumed), parseResult)).to.be.true;
+      };
+    };
+  };
+
+
+  var makeKleeneTests = function(desc, isOneOrMore, parser, text, times) {
+    it(desc + ' returns correct number of results for input of length ' + times,
+       checkLength(parser, text, times, isOneOrMore));
+    it(desc + ' returns correct results for input of length ' + times,
+       checkOccurences(parser, text, times, isOneOrMore));
+  };
+
+
+  describe('zeroOrMoreOf Combinator', function() {
+    var zeroOrMoreOf =  ParserCombinators.zeroOrMoreOf;
+    var makeZeroOrMoreOf = function() {return zeroOrMoreOf(ParserCombinators.symbol('a'));};
+    makeStandardParserTests('zeroOrMoreOf', makeZeroOrMoreOf);
+
+
+    it('zeroOrMoreOf returns correct ParseResult for no matches (1)', function() {
+      var p1 = ParserCombinators.fail;
+      var input = 'a';
+      var parser = zeroOrMoreOf(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, [])]);
+    });
+
+
+    it('zeroOrMoreOf returns correct ParseResult for no matches (2)', function() {
+      var p1 = ParserCombinators.symbol('a');
+      var input = 'b';
+      var parser = zeroOrMoreOf(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, [])]);
+    });
+
+
+    it('zeroOrMoreOf accepts zero from empty input', function() {
+      var p1 = ParserCombinators.symbol('b');
+      var input = '';
+      var parser = zeroOrMoreOf(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, [])]);
+    });
+
+
+    var a = zeroOrMoreOf(ParserCombinators.symbol('a'));
+    for (var i = 0; i < 5; i++)
+      makeKleeneTests('zeroOrMore', false, a, 'a', i);
+
+    var digit = zeroOrMoreOf(ParserCombinators.satisfy(function(c) {return c >= '0' && c <= '9';}));
+    for (var i = 5; i < 10; i++)
+      makeKleeneTests('zeroOrMore', false, digit, ['0', '1', '2', '3', '4'][i - 5], i);
   });
 });

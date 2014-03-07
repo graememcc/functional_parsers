@@ -175,6 +175,13 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var zeroOrMoreOf = function(p) {
+    return Parser(function(input) {
+      return p.thenConcat(zeroOrMoreOf(p)).or(succeed([]))(input);
+    });
+  };
+
+
   return {
     alt: alt,
     apply: apply,
@@ -190,6 +197,7 @@ define(['ParseResult.js'], function(ParseResult) {
     symbol: symbol,
     takeFirstValueOfSeq: takeFirstValueOfSeq,
     takeSecondValueOfSeq: takeSecondValueOfSeq,
-    token: token
+    token: token,
+    zeroOrMoreOf: zeroOrMoreOf
   };
 });

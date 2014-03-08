@@ -182,12 +182,18 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var oneOrMoreOf = function(p) {
+    return p.thenConcat(zeroOrMoreOf(p));
+  };
+
+
   return {
     alt: alt,
     apply: apply,
     concatSeq: concatSeq,
     epsilon: epsilon,
     fail: fail,
+    oneOrMoreOf: oneOrMoreOf,
     plus: plus,
     satisfy: satisfy,
     seq: seq,

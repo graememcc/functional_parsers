@@ -26,7 +26,8 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
   describe('ParserCombinators exports', function() {
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
                  'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence',
-                 'plus', 'takeFirstValueOfSeq', 'takeSecondValueOfSeq', 'zeroOrMoreOf'];
+                 'plus', 'takeFirstValueOfSeq', 'takeSecondValueOfSeq', 'zeroOrMoreOf',
+                 'oneOrMoreOf'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -1376,5 +1377,39 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     var digit = zeroOrMoreOf(ParserCombinators.satisfy(function(c) {return c >= '0' && c <= '9';}));
     for (var i = 5; i < 10; i++)
       makeKleeneTests('zeroOrMore', false, digit, ['0', '1', '2', '3', '4'][i - 5], i);
+  });
+
+
+  describe('oneOrMoreOf Combinator', function() {
+    var oneOrMoreOf =  ParserCombinators.oneOrMoreOf;
+    var makeOneOrMoreOf = function() {return oneOrMoreOf(ParserCombinators.symbol('a'));};
+    makeStandardParserTests('oneOrMoreOf', makeOneOrMoreOf);
+
+
+    it('oneOrMoreOf fails for no matches (1)', function() {
+      var p1 = ParserCombinators.symbol('b');
+      var input = 'a';
+      var parser = oneOrMoreOf(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('oneOrMoreOf fails for no matches (2)', function() {
+      var p1 = ParserCombinators.symbol('a').then(ParserCombinators.symbol('b'));
+      var input = 'ac';
+      var parser = oneOrMoreOf(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    var a = oneOrMoreOf(ParserCombinators.symbol('a'));
+    for (var i = 1; i < 5; i++)
+      makeKleeneTests('oneOrMore', true, a, 'a', i);
+
+    var digit = oneOrMoreOf(ParserCombinators.satisfy(function(c) {return c >= '0' && c <= '9';}));
+    for (var i = 5; i < 10; i++)
+      makeKleeneTests('oneOrMore', true, digit, ['0', '1', '2', '3', '4'][i - 5], i);
   });
 });

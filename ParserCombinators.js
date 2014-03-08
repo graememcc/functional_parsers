@@ -187,6 +187,11 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var optional = function(p) {
+    return apply(function(x) {return [x];}, p).or(succeed([]));
+  };
+
+
   return {
     alt: alt,
     apply: apply,
@@ -194,6 +199,7 @@ define(['ParseResult.js'], function(ParseResult) {
     epsilon: epsilon,
     fail: fail,
     oneOrMoreOf: oneOrMoreOf,
+    optional: optional,
     plus: plus,
     satisfy: satisfy,
     seq: seq,

@@ -27,7 +27,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
                  'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence',
                  'plus', 'takeFirstValueOfSeq', 'takeSecondValueOfSeq', 'zeroOrMoreOf',
-                 'oneOrMoreOf'];
+                 'oneOrMoreOf', 'optional'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -1411,5 +1411,73 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     var digit = oneOrMoreOf(ParserCombinators.satisfy(function(c) {return c >= '0' && c <= '9';}));
     for (var i = 5; i < 10; i++)
       makeKleeneTests('oneOrMore', true, digit, ['0', '1', '2', '3', '4'][i - 5], i);
+  });
+
+
+  describe('optional Combinator', function() {
+    var optional =  ParserCombinators.optional;
+    var makeOptional = function() {return optional(ParserCombinators.symbol('a'));};
+    makeStandardParserTests('optional', makeOptional);
+    var containsResult = Utilities.containsResult;
+
+
+    it('optional returns correct ParseResult for no matches (1)', function() {
+      var p1 = ParserCombinators.fail;
+      var input = 'a';
+      var parser = optional(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, [])]);
+    });
+
+
+    it('optional returns correct ParseResult for no matches (2)', function() {
+      var p1 = ParserCombinators.symbol('a');
+      var input = 'b';
+      var parser = optional(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, [])]);
+    });
+
+
+    it('optional accepts zero from empty input', function() {
+      var p1 = ParserCombinators.symbol('a');
+      var input = '';
+      var parser = optional(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, [])]);
+    });
+
+
+    it('optional returns both results for a single match (1)', function() {
+      var p1 = ParserCombinators.symbol('a');
+      var input = 'a';
+      var parser = optional(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(2);
+      expect(containsResult(ParseResult(input, []), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('', [input]), parseResult)).to.be.true;
+    });
+
+
+    it('optional returns both results for a single match (2)', function() {
+      var p1 = ParserCombinators.symbol('b').then(ParserCombinators.symbol('c'));
+      var input = 'bc';
+      var parser = optional(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(2);
+      expect(containsResult(ParseResult(input, []), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('', [input.split('')]), parseResult)).to.be.true;
+    });
+
+
+    it('optional consumes at most one match', function() {
+      var p1 = ParserCombinators.symbol('a');
+      var input = 'aa';
+      var parser = optional(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(2);
+      expect(containsResult(ParseResult(input, []), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('a', ['a']), parseResult)).to.be.true;
+    });
   });
 });

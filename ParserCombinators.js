@@ -192,12 +192,28 @@ define(['ParseResult.js'], function(ParseResult) {
   };
 
 
+  var joinArray = function(val) {
+    return val.join('');
+  };
+
+
+  var zeroOrMoreCharacters = function(p) {
+    return apply(joinArray, zeroOrMoreOf(p));
+  };
+
+
+  var oneOrMoreCharacters = function(p) {
+    return apply(joinArray, oneOrMoreOf(p));
+  };
+
+
   return {
     alt: alt,
     apply: apply,
     concatSeq: concatSeq,
     epsilon: epsilon,
     fail: fail,
+    oneOrMoreCharacters: oneOrMoreCharacters,
     oneOrMoreOf: oneOrMoreOf,
     optional: optional,
     plus: plus,
@@ -210,6 +226,7 @@ define(['ParseResult.js'], function(ParseResult) {
     takeFirstValueOfSeq: takeFirstValueOfSeq,
     takeSecondValueOfSeq: takeSecondValueOfSeq,
     token: token,
+    zeroOrMoreCharacters: zeroOrMoreCharacters,
     zeroOrMoreOf: zeroOrMoreOf
   };
 });

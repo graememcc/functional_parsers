@@ -27,7 +27,7 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
     var props = ['symbol', 'token', 'satisfy', 'succeed', 'epsilon', 'fail',
                  'alt', 'strictAlt', 'seq', 'apply', 'concatSeq', 'sequence',
                  'plus', 'takeFirstValueOfSeq', 'takeSecondValueOfSeq', 'zeroOrMoreOf',
-                 'oneOrMoreOf', 'optional'];
+                 'oneOrMoreOf', 'optional', 'zeroOrMoreCharacters', 'oneOrMoreCharacters'];
 
     props.forEach(function(p) {
       it('ParserCombinator object has \'' + p + '\' property', makePropertyTest(ParserCombinators, p));
@@ -1478,6 +1478,109 @@ requirejs(['ParserCombinators.js', 'ParseResult.js', 'Utilities.js', 'chai'],
       expect(parseResult.length).to.equal(2);
       expect(containsResult(ParseResult(input, []), parseResult)).to.be.true;
       expect(containsResult(ParseResult('a', ['a']), parseResult)).to.be.true;
+    });
+  });
+
+
+  describe('zeroOrMoreCharacters Combinator', function() {
+    var containsResult = Utilities.containsResult;
+    var zeroOrMoreCharacters =  ParserCombinators.zeroOrMoreCharacters;
+    var makeZeroOrMoreOf = function() {return zeroOrMoreCharacters(ParserCombinators.symbol('a'));};
+    makeStandardParserTests('zeroOrMoreCharacters', makeZeroOrMoreOf);
+
+
+    it('zeroOrMoreCharacters returns correct ParseResult for no matches (1)', function() {
+      var p1 = ParserCombinators.fail;
+      var input = 'a';
+      var parser = zeroOrMoreCharacters(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, '')]);
+    });
+
+
+    it('zeroOrMoreCharacters returns correct ParseResult for no matches (2)', function() {
+      var p1 = ParserCombinators.symbol('a');
+      var input = 'b';
+      var parser = zeroOrMoreCharacters(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, '')]);
+    });
+
+
+    it('zeroOrMoreCharacters accepts zero from empty input', function() {
+      var p1 = ParserCombinators.symbol('b');
+      var input = '';
+      var parser = zeroOrMoreCharacters(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([ParseResult(input, '')]);
+    });
+
+
+    it('zeroOrMoreCharacters returns string containing matched input (1)', function() {
+      var parser = zeroOrMoreCharacters(ParserCombinators.symbol('a'));
+      var input = 'aa';
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(3);
+      expect(containsResult(ParseResult(input, ''), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('a', 'a'), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('', input), parseResult)).to.be.true;
+    });
+
+
+    it('zeroOrMoreCharacters returns string containing matched input (2)', function() {
+      var parser = zeroOrMoreCharacters(ParserCombinators.symbol('a'));
+      var input = 'aab';
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(3);
+      expect(containsResult(ParseResult(input, ''), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('ab', 'a'), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('b', 'aa'), parseResult)).to.be.true;
+    });
+  });
+
+
+  describe('oneOrMoreCharacters Combinator', function() {
+    var containsResult = Utilities.containsResult;
+    var oneOrMoreCharacters =  ParserCombinators.oneOrMoreCharacters;
+    var makeOneOrMoreOf = function() {return oneOrMoreCharacters(ParserCombinators.symbol('a'));};
+    makeStandardParserTests('oneOrMoreCharacters', makeOneOrMoreOf);
+
+
+    it('oneOrMoreCharacters fails for no matches (1)', function() {
+      var p1 = ParserCombinators.symbol('b');
+      var input = 'a';
+      var parser = oneOrMoreCharacters(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('oneOrMoreCharacters fails for no matches (2)', function() {
+      var p1 = ParserCombinators.symbol('a').then(ParserCombinators.symbol('b'));
+      var input = 'ac';
+      var parser = oneOrMoreCharacters(p1);
+      var parseResult = getResults(parser, input);
+      expect(parseResult).to.deep.equal([]);
+    });
+
+
+    it('oneOrMoreCharacters returns string containing matched input (1)', function() {
+      var parser = oneOrMoreCharacters(ParserCombinators.symbol('a'));
+      var input = 'aa';
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(2);
+      expect(containsResult(ParseResult('a', 'a'), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('', input), parseResult)).to.be.true;
+    });
+
+
+    it('oneOrMoreCharacters returns string containing matched input (2)', function() {
+      var parser = oneOrMoreCharacters(ParserCombinators.symbol('a'));
+      var input = 'aab';
+      var parseResult = getResults(parser, input);
+      expect(parseResult.length).to.equal(2);
+      expect(containsResult(ParseResult('ab', 'a'), parseResult)).to.be.true;
+      expect(containsResult(ParseResult('b', 'aa'), parseResult)).to.be.true;
     });
   });
 });
